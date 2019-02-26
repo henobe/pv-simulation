@@ -1,5 +1,13 @@
 library(tidyverse)
 
+gradToRad <- function(value){
+  value/360*(2*pi)
+}
+
+diff180 <- function(value){
+  value-180
+}
+
 calculateEfficiency <- function(alpha, beta){
   x <- cos(alpha)
   y <- cos(beta)
@@ -7,17 +15,29 @@ calculateEfficiency <- function(alpha, beta){
   x*y
 }
 
-calculateEfficiency(0.345, 0.3554)
-
 # https://www.sunearthtools.com/dp/tools/pos_sun.php?lang=de
 
-solarWinkel <- read_delim('SunPath.csv', delim = ";", skip = 3)
-
-# Elevation muss höher größer null sein -> filtern
+solarWinkel <- read_delim('SunPath.csv', delim = ";", skip = 3) %>%
+  filter(Elevation > 0) %>%
+  mutate_at(c("Azimuth"), diff180) %>%
+  mutate(ElevationRad = gradToRad(Elevation)) %>%
+  mutate(AzimuthRad = gradToRad(Azimuth)) %>%
+  mutate(projectedArea = calculateEfficiency(ElevationRad, AzimuthRad))
 
 ggplot(solarWinkel, aes(x = Azimuth, y = Elevation)) +
+  geom_label(data = solarWinkel[seq(1, nrow(solarWinkel), 10),], aes(label = Stunde)) +
   geom_line(alpha = 0.5) +
   geom_point(size = 0.5) +
-  geom_label(data = solarWinkel[seq(1, nrow(solarWinkel), 10),], aes(label = Stunde)) +
   scale_y_continuous(limits = c(0,90)) +
-  scale_x_continuous(limits = c(0,360), breaks = c(0,90,180,270,360))
+  scale_x_continuous(limits = c(-180,180), breaks = c(-180,-90,0,90,180))
+
+ggplot(solarWinkel, aes(x = Stunde, y = projectedArea)) +
+  geom_line() +
+  geom_hline(yintercept = 1) +
+  labs(
+    x = "Uhrzeit",
+    y = "Flächenverkleinerung"
+  )
+
+# Flächensteigerung anstatt Flächenverminderung ausrechnen
+# Flächendifferenz als Prozent ermitteln
