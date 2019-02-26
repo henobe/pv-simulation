@@ -9,13 +9,13 @@ diff180 <- function(value){
 }
 
 calculateEfficiency <- function(alpha, beta){
-  x <- cos(alpha)
-  y <- cos(beta)
+  x <- 1/cos(alpha)
+  y <- 1/cos(beta)
   
   x*y
 }
 
-# https://www.sunearthtools.com/dp/tools/pos_sun.php?lang=de
+# https://www.sunearthtools.com/dp/tools/pos_sun.php
 
 solarWinkel <- read_delim('SunPath.csv', delim = ";", skip = 3) %>%
   filter(Elevation > 0) %>%
@@ -31,13 +31,18 @@ ggplot(solarWinkel, aes(x = Azimuth, y = Elevation)) +
   scale_y_continuous(limits = c(0,90)) +
   scale_x_continuous(limits = c(-180,180), breaks = c(-180,-90,0,90,180))
 
+ggsave("sonnenstand.png", width = 10, height = 5, dpi = 200)
+
 ggplot(solarWinkel, aes(x = Stunde, y = projectedArea)) +
   geom_line() +
   geom_hline(yintercept = 1) +
   labs(
     x = "Uhrzeit",
-    y = "Flächenverkleinerung"
-  )
+    y = "Flächenunterschied"
+  ) +
+  scale_y_continuous(limits = c(0,3.7))
 
-# Flächensteigerung anstatt Flächenverminderung ausrechnen
-# Flächendifferenz als Prozent ermitteln
+ggsave("einstrahlfläche.png", width = 10, height = 5, dpi = 200)
+
+
+# "Tagesbilanz", also Prozentualer Gesamtunterschied berechnen
