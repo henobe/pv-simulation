@@ -19,7 +19,8 @@ calculateEfficiency <- function(alpha, beta){
 
 solarWinkel <- read_delim('SunPath.csv', delim = ";", skip = 3) %>%
   filter(Elevation > 0) %>%
-  mutate_at(c("Azimuth"), diff180) %>%
+  #mutate_at(c("Azimuth"), diff180) %>%
+  mutate_at(c("Azimuth"), function(x) x-180) %>% # Lösung über anonyme Funktion, um auszuprobieren
   mutate(ElevationRad = gradToRad(Elevation)) %>%
   mutate(AzimuthRad = gradToRad(Azimuth)) %>%
   mutate(projectedArea = calculateEfficiency(ElevationRad, AzimuthRad))
@@ -31,7 +32,7 @@ ggplot(solarWinkel, aes(x = Azimuth, y = Elevation)) +
   scale_y_continuous(limits = c(0,90)) +
   scale_x_continuous(limits = c(-180,180), breaks = c(-180,-90,0,90,180))
 
-ggsave("sonnenstand.png", width = 10, height = 5, dpi = 200)
+#ggsave("sonnenstand.png", width = 10, height = 5, dpi = 200)
 
 ggplot(solarWinkel, aes(x = Stunde, y = projectedArea)) +
   geom_line() +
@@ -42,7 +43,8 @@ ggplot(solarWinkel, aes(x = Stunde, y = projectedArea)) +
   ) +
   scale_y_continuous(limits = c(0,3.7))
 
-ggsave("einstrahlfläche.png", width = 10, height = 5, dpi = 200)
-
+#ggsave("einstrahlfläche.png", width = 10, height = 5, dpi = 200)
 
 # "Tagesbilanz", also Prozentualer Gesamtunterschied berechnen
+# Optimierungsfunktion für besten Starren Winkel
+# Strahlung mit "1 Watt"
