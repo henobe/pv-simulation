@@ -1,9 +1,9 @@
 berechne_winkeleffizienz <- function(elevation_winkel, elevation, azimuth){
   
-  new_el_winkel <- elevation_winkel + elevation
+  new_el_winkel <- elevation - elevation_winkel
   
-  x <- 1/sin(new_el_winkel)
-  y <- 1/cos(azimuth)
+  x <- cos(new_el_winkel)
+  y <- cos(azimuth)
   
   x*y
 }

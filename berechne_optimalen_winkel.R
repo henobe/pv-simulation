@@ -3,16 +3,16 @@ berechne_optimalen_winkel <- function(time, elevation, azimuth){
   
 }
 
-winkelsammlung <- c(0,5,10,15,20,25)
+winkelsammlung <- c(0,50,60,70,80,90)
 
 winkelsammlung_Rad <- winkelsammlung*pi/180
 
-flaeche_a <- berechne_winkeleffizienz(winkelsammlung_Rad[[1]], solar_winkel$ElevationRad, solar_winkel$AzimuthRad)
-flaeche_b <- berechne_winkeleffizienz(winkelsammlung_Rad[[2]], solar_winkel$ElevationRad, solar_winkel$AzimuthRad)
-flaeche_c <- berechne_winkeleffizienz(winkelsammlung_Rad[[3]], solar_winkel$ElevationRad, solar_winkel$AzimuthRad)
-flaeche_d <- berechne_winkeleffizienz(winkelsammlung_Rad[[4]], solar_winkel$ElevationRad, solar_winkel$AzimuthRad)
-flaeche_e <- berechne_winkeleffizienz(winkelsammlung_Rad[[5]], solar_winkel$ElevationRad, solar_winkel$AzimuthRad)
-flaeche_f <- berechne_winkeleffizienz(winkelsammlung_Rad[[6]], solar_winkel$ElevationRad, solar_winkel$AzimuthRad)
+flaeche_a <- berechne_winkeleffizienz(winkelsammlung_Rad[[1]], solar_winkel$kippwinkel_rad, solar_winkel$AzimuthRad)
+flaeche_b <- berechne_winkeleffizienz(winkelsammlung_Rad[[2]], solar_winkel$kippwinkel_rad, solar_winkel$AzimuthRad)
+flaeche_c <- berechne_winkeleffizienz(winkelsammlung_Rad[[3]], solar_winkel$kippwinkel_rad, solar_winkel$AzimuthRad)
+flaeche_d <- berechne_winkeleffizienz(winkelsammlung_Rad[[4]], solar_winkel$kippwinkel_rad, solar_winkel$AzimuthRad)
+flaeche_e <- berechne_winkeleffizienz(winkelsammlung_Rad[[5]], solar_winkel$kippwinkel_rad, solar_winkel$AzimuthRad)
+flaeche_f <- berechne_winkeleffizienz(winkelsammlung_Rad[[6]], solar_winkel$kippwinkel_rad, solar_winkel$AzimuthRad)
 
 winkelvergleich <- tibble(
   time = solar_winkel$Stunde,
@@ -26,9 +26,9 @@ winkelvergleich <- tibble(
   mutate(time_diff_sec = time - time[[1]])
   
 
-winkelvergleich_gathered <- gather(winkelvergleich, "winkel", "flaeche", -time)
+winkelvergleich_gathered <- gather(winkelvergleich, "winkel", "flaeche", -time, -time_diff_sec)
 
-ggplot(winkelvergleich, aes(x = time, y = flaeche, colour = winkel)) +
+ggplot(winkelvergleich_gathered, aes(x = time, y = flaeche, colour = winkel)) +
   geom_line()
 
 wert_a <- berechne_kurvenflaeche(winkelvergleich$time_diff_sec, winkelvergleich$a)
@@ -40,5 +40,5 @@ wert_f <- berechne_kurvenflaeche(winkelvergleich$time_diff_sec, winkelvergleich$
 
 winkelwerte <- c(wert_a, wert_b, wert_c, wert_d, wert_e, wert_f)
 
-ggplot(mapping = aes(x = 1, y = winkelwerte)) +
+ggplot(mapping = aes(x = c("a","b","c","d","e","f"), y = winkelwerte)) +
   geom_point()

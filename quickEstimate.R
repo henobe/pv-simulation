@@ -9,8 +9,8 @@ diff180 <- function(value){
 }
 
 calculateEfficiency <- function(alpha, beta){
-  x <- 1/cos(alpha)
-  y <- 1/cos(beta)
+  x <- 1/sin(alpha) # hier sinus, weil dieser Winkel aus Daten kommt
+  y <- 1/cos(beta) # hier Cosinus, weil dieser Winkel anders ist
   
   x*y
 }
@@ -21,10 +21,12 @@ solar_winkel <- read_delim('SunPath.csv', delim = ";", skip = 3) %>%
   filter(Elevation > 0) %>%
   mutate(time_diff_sec = Stunde - Stunde[[1]]) %>%
   #mutate_at(c("Azimuth"), diff180) %>%
+  mutate(kippwinkel = 90 - Elevation) %>%
   mutate_at(c("Azimuth"), function(x) x-180) %>% # Lösung über anonyme Funktion, um auszuprobieren
   mutate(ElevationRad = gradToRad(Elevation)) %>%
   mutate(AzimuthRad = gradToRad(Azimuth)) %>%
-  mutate(projectedArea = calculateEfficiency(ElevationRad, AzimuthRad))
+  mutate(kippwinkel_rad = gradToRad(kippwinkel))
+#  mutate(projectedArea = calculateEfficiency(ElevationRad, AzimuthRad))
 
 ggplot(solar_winkel, aes(x = Azimuth, y = Elevation)) +
   geom_label(data = solar_winkel[seq(1, nrow(solar_winkel), 10),], aes(label = Stunde)) +
@@ -42,7 +44,7 @@ ggplot(solar_winkel, aes(x = Stunde, y = projectedArea)) +
     x = "Uhrzeit",
     y = "Flächenunterschied"
   ) +
-  scale_y_continuous(limits = c(0,3.7))
+  scale_y_continuous(limits = c(0,10))
 
 #ggsave("einstrahlfläche.png", width = 10, height = 5, dpi = 200)
 
