@@ -42,3 +42,17 @@ winkelwerte <- c(wert_a, wert_b, wert_c, wert_d, wert_e, wert_f)
 
 ggplot(mapping = aes(x = c("a","b","c","d","e","f"), y = winkelwerte)) +
   geom_point()
+
+# Plan des Ablaufes: --------------------------------------
+# man hat elevation und azimuth zu bestimmten Zeitpunkten
+# man kann einen elevation winkel voreinstellen
+
+# daraus: Wie viel relative "Einstrahlfläche" man zu welchem Zeitpunkt hat
+# man nimmt die gemessene Stahlungsenergie/m²_flach
+# daraus: Wie viel Strahlungsenergie/m²_Solarpanel zur Verfügung steht
+# man nimmt das Datenblatt des Solarpanels
+# daraus: Wie viel Leistung aus Strahlungsenergie/m²_Solarpanel generiert wird
+# daraus: Bilanzierung der produzierten Enegiermenge/m²_Solarpanel über einen Zeitraum
+# --> bis hier nur ein einziger Kippwinkel
+
+# daraus: Vergleich zu perfekter Nachführung sowie daraus: Auswahl des besten festen Winkels
