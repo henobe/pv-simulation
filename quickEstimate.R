@@ -1,7 +1,11 @@
 library(tidyverse)
 
-gradToRad <- function(value){
-  value/360*(2*pi)
+grad_zu_rad <- function(value){
+  value*pi/180
+}
+
+rad_zu_grad <- function(x){
+  x*180/pi
 }
 
 diff180 <- function(value){
