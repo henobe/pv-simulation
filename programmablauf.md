@@ -11,7 +11,7 @@
 
 ----
 
-## Einstrahlfläche
+## Einstrahlfläche  -> berechne_relative_einstrahlflaeche
 - Wie viel relative "Einstrahlfläche" man zu welchem Zeitpunkt hat
 - **input** sonnenwinkelelevation, sonnenwinkelazimuth, eingestellterazimuthwinkel
 - **output** double Wert

@@ -1,4 +1,4 @@
-berechne_winkeleffizienz <- function(kipp_winkel, einstrahl_hoehenwinkel, einstrahl_azimuthwinkel){
+berechne_relative_einstrahlflaeche <- function(kipp_winkel, einstrahl_hoehenwinkel, einstrahl_azimuthwinkel){
   
   relativer_optimaler_kippwinkel <- pi/2 - einstrahl_hoehenwinkel - kipp_winkel
   # 90 Grad + Einstrahlwinkel + "optimaler Ausrichtwinkel" ergeben stets 180 Grad
