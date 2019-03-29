@@ -7,3 +7,4 @@ pv-simulation.Rproj
 sonnenstand.png
 einstrahlfläche.png
 mock_data.R
+tests.R
