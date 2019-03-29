@@ -1,16 +1,18 @@
-berechne_relative_einstrahlflaeche <- function(kippwinkel, einstrahl_hoehenwinkel, einstrahl_azimuthwinkel, rad = TRUE){
+berechne_relative_einstrahlflaeche <- function(einstrahl_hoehenwinkel, kipp_hoehenwinkel = 0, einstrahl_azimuthwinkel, kipp_azimuthwinkel = 0, radiant = TRUE, optimal = FALSE){
+  # Kein Input der Kippwinkel -> Flachliegend
+  # Flag auf Optimal -> Berechnung mit optimaler Nachführung
   
-  if (rad == FALSE) kippwinkel <- wechsel_grad_zu_rad(kippwinkel)
+  if (radiant == FALSE) {
+    einstrahl_hoehenwinkel <- wechsel_grad_zu_rad(einstrahl_hoehenwinkel)
+    kipp_hoehenwinkel <- wechsel_grad_zu_rad(kipp_hoehenwinkel)
+    einstrahl_azimuthwinkel <- wechsel_grad_zu_rad(einstrahl_azimuthwinkel)
+    kipp_azimuthwinkel <- wechsel_grad_zu_rad(kipp_azimuthwinkel)
+  }
   
-  relativer_optimaler_kippwinkel <- pi/2 - einstrahl_hoehenwinkel - kippwinkel
-  # 90 Grad + Einstrahlwinkel + "optimaler Ausrichtwinkel" ergeben stets 180 Grad
-  # der relative optimale Kippwinkel berücksichtigt zusätzlich die Kippung
-  
-  relativer_optimaler_azimuthwinkel <- einstrahl_azimuthwinkel - pi
-  # der Azimuthwinkel wird ausgehend von einem Kreismit 0 Richtung Norden angegeben. 
-  # um den Richtwert "0" im Süden zu haben, wird der Winkel um 180° gedreht
-  # Eine Einstellung des Azimuthwinkels ist nicht vorgesehen,
-  # es wird von einer Standardausrichtugn nach Süden ausgegangen
-  
-  abs(cos(relativer_optimaler_kippwinkel) * cos(relativer_optimaler_azimuthwinkel))
+  if (optimal) 
+    {
+    berechne_relative_kipplaenge(einstrahl_hoehenwinkel) * berechne_relative_kipplaenge(einstrahl_azimuthwinkel)
+  } else {
+    berechne_relative_kipplaenge(einstrahl_hoehenwinkel, kipp_hoehenwinkel) * berechne_relative_kipplaenge(einstrahl_azimuthwinkel, kipp_azimuthwinkel)
+  }
 }
