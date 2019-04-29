@@ -1,9 +1,15 @@
 berechne_relative_kipplaenge <- function(einstrahlwinkel, kippwinkel = (pi/2 - einstrahlwinkel)) {
   # ohne Input wird direkt die relative Länge bei optimaler Ausrichtung berechnet.
+  # Winkel in Radiant
+  # Das Lot der liegenden Fläche entspricht 90 Grad Winkel (nicht 0°)
   
-  if (einstrahlwinkel > (pi/2) || kippwinkel > (pi/2)) 
-    warning("Make sure to use radiant, input is greater than right angle")
+  einstrahlwinkel <- ifelse((einstrahlwinkel %% pi) == 0, NaN, einstrahlwinkel)
+  # Division mit 0 vermeiden
   
-  sin(einstrahlwinkel + kippwinkel) / sin(einstrahlwinkel)
+  abs(sin(einstrahlwinkel + kippwinkel) / sin(einstrahlwinkel))
   # see documentation for reason behind calculation
+  # Der Betrag, weil Länge immer positiv ist (tritt auf bei Winkel > 180 oder <0)
+
+  # Issues: 
+  # - bei Mehrfachen von pi wird die Berechnung unzulässig ungenau
 }
