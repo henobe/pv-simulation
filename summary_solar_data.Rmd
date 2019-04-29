@@ -1,0 +1,178 @@
+---
+title: "Statusbericht Bachelorprojekt"
+subtitle: "Berechnungen mit festen Daten"
+author: "Hendrik Obelöer"
+date: "29 April 2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load libraries, include=FALSE}
+source('load_libraries.R')
+```
+
+```{r load functions, include=FALSE}
+source('various_helper_functions.R')
+source('berechne_relative_kipplaenge.R')
+```
+
+# Daten vom deutschen Wetterdienst
+
+Zuerst werden tatsächliche Solardaten über diesen Link vom deutschen Wetterdienst besorgt: <ftp://ftp-cdc.dwd.de/pub/CDC/observations_germany/climate/10_minutes/solar/recent/>.
+
+Dabei wurde die Wetterstation in Hamburg-Fuhlsbüttel ausgewählt.
+
+| ID    | Stationshoehe | geoBreite | geoLaenge |
+|-------|---------------|-----------|-----------|
+| 01975 | 11            | 53.6332   | 9.9881    |
+
+(Koordinaten sind direkt neben den Startbahnen des Flughafens.)
+
+
+```{r Sonnenstrahlungsdaten laden, include=FALSE}
+solar_data <- read_delim('solardaten/solardaten_messtation-01975_20171026-20190428.txt', delim = ";") %>%
+  rename("qualitaet" = '  QN',
+         "diffuse_strahlung" = "DS_10",
+         "globale_strahlung" = "GS_10",
+         "sonnenscheindauer" = "SD_10",
+         "atmosphaerische_gegenstrahlung" = "LS_10") %>%
+  mutate_if(is.character, str_trim) %>%
+  mutate_if(is.character, as.numeric) %>%
+  mutate_at("MESS_DATUM", ymd_hm)
+```
+
+```{r Sonnenwinkeldaten einlesen, include=FALSE}
+solar_winkel <- read_csv('solardaten/sonnenwinkel_20190419.csv', skip = 3) %>%
+  rename("uhrzeit" = "Stunde") %>%
+  mutate('datetime' = make_datetime(year = 2019L, month = 4L, day = 19L, hour = hour(uhrzeit), min = minute(uhrzeit))) %>%
+  mutate('azimuth_funktionskonform' = wechsel_grad_zu_rad(Azimuth - 90)) %>%
+  mutate('elevation_funktionskonform' = wechsel_grad_zu_rad(Elevation))
+```
+
+```{r Daten zu Karfreitag zusammenführen}
+solar_data_karfreitag <- solar_data %>%
+  filter(year(MESS_DATUM) == 2019, month(MESS_DATUM) == 4, mday(MESS_DATUM) == 19) %>%
+  left_join(solar_winkel, by = c("MESS_DATUM" = "datetime"))
+```
+
+Wir betrachten nur den Karfreitag letzter Woche, weil dies für die Berechnungen erstmal reicht und dieser Tag ein besonders wolkenloser Tag war. Die gemessenen Strahlungswerte an diesem Tag sind hier visualisiert:
+
+```{r Visualisierung}
+  ggplot(solar_data_karfreitag) +
+    geom_line(aes(x = MESS_DATUM, y = globale_strahlung, colour = "Globale Strahlung")) +
+    geom_line(aes(x = MESS_DATUM, y = diffuse_strahlung, colour = "Diffuse Strahlung")) +
+  scale_colour_manual(values = c("blue", "red")) +
+  labs(
+    y = "Strahlung in J/cm^2",
+    x = "Uhrzeit",
+    colour = "Strahlungsart"
+  ) +
+  theme(legend.position = "bottom")
+```
+
+# Sonnenposition
+
+Für den gleichen Ort und Zeitraum werden die Position der Sonne benötigt. Dabei werden Daten dieser Webseite benutzt:  <https://www.sunearthtools.com/dp/tools/pos_sun.php>. Die Daten mit ihren 10-Minuten-Stempeln werden den Daten für die Sonneneinstrahlung zugeordnet.
+
+Die Sonnenwinkel sahen am letzten Freitag also so aus:
+
+```{r Daten visualisieren}
+ggplot(solar_winkel, aes(x = Azimuth, y = Elevation)) +
+  geom_line(alpha = 0.5) +
+  geom_point(size = 0.5) +
+#  geom_label(data = solar_winkel[seq(1, nrow(solar_winkel), 9),], aes(label = uhrzeit)) +
+  geom_label(data = filter(solar_winkel, Elevation == max(Elevation)), aes(label = uhrzeit)) +
+  geom_label(data = solar_winkel[1,], aes(label = uhrzeit)) +
+  geom_label(data = solar_winkel[nrow(solar_winkel),], aes(label = uhrzeit)) +
+  labs(
+    x = "Breitenwinkel",
+    y = "Höhenwinkel"
+  ) +
+  scale_x_continuous(limits = c(0,360), breaks = c(0,90,180,270,360))
+
+```
+
+# Berechnung der relativen "Schattenlänge"
+
+Zu jedem Zeitpunkt wird die relative "Schattenlänge" bzw. relative Menge an Licht, die bei einer gekippten Fläche im Vergleich zu einer flachen aufgefangen wird, berechnet. Höhen- und Azimuthwinkel werden getrennt betrachtet. Beide Faktoren werden für die Flächenbetrachtung multipliziert.
+
+Bei dieser Berechnung ist aufgefallen, dass noch ein Denkfehler in der bisherigen Berechnung verborgen bliebt. Dies hat mit Winkeln zu tun, bei denen die Sonne mehr als 180° an einem Tag ausfüllt, dies passiert jedoch zwischen März und September in den Breitenwinkeln.
+
+Um die weitere Funktionsweise zu testen, wurden die Daten gefiltert, sodass nur Daten Winkel größer 0° und kleiner 180° betrachtet wurden.
+
+Es sind die relativen "Gewinne" an Strahlungsfläche visualisiert:
+
+```{r Schattenberechnung}
+mock_winkel_vector <- ifelse(90 < solar_data_karfreitag$Azimuth & solar_data_karfreitag$Azimuth < 270, solar_data_karfreitag$azimuth_funktionskonform, NA)
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+  mutate("azimuth_relation_perfekt" = berechne_relative_kipplaenge(mock_winkel_vector)) %>%
+  mutate("elevation_relation_perfekt" = berechne_relative_kipplaenge(solar_data_karfreitag$elevation_funktionskonform)) %>%
+  mutate("relative_schattenflaeche" = abs(azimuth_relation_perfekt) * abs(elevation_relation_perfekt)) %>%
+  mutate("strahlung_perfekte_nachfuehrung" = relative_schattenflaeche * globale_strahlung)
+
+ggplot(solar_data_karfreitag, aes(x = uhrzeit, y = relative_schattenflaeche)) +
+    geom_line() +
+    labs(x = "Uhrzeit",
+         y = "relative Schattenfläche")
+```
+
+Dies ist natürlich wenig aufschlussreich da gerade zu Morgen- und Abendstunden die Sonne mit einer niedrigen Intensität scheint. 
+
+# Vergleich von "Strahlungsertrag"
+
+Multipliziert man den relativen Strahlungsgewinn nun mit den Solardaten aus dem ersten Grafen (Globalstrahlung), kann man den Gewinn an Ertrag bereits besser erkennen:
+
+```{r Visualisierung Strahlungsgewinn}
+solar_data_karfreitag %>%
+  ggplot(aes(x = uhrzeit)) +
+    geom_line(aes(y = globale_strahlung, colour = "Strahlung Flach")) +
+    geom_line(aes(y = strahlung_perfekte_nachfuehrung, colour = "Strahlung nachgeführt")) +
+  scale_colour_manual(values = c("blue", "red")) +
+  labs(
+    y = "Strahlung in J/cm^2",
+    x = "Uhrzeit",
+    colour = "Strahlungsart"
+  ) +
+  theme(legend.position = "bottom")
+
+```
+
+Es ist zu beachten: die Berechnung des nachgeführten Daten wurde abgeschnitten am Morgen und Abend, weil dort noch ein Berechnungsfehler vorliegt. Dennoch scheint der extreme Mehrgewinn am Morgen noch sehr untypisch zu sein. Konzentriert man sich auf die weiteren Daten sieht der Graf so aus: 
+
+```{r Visualisierung Strahlungsgewinn clipped}
+solar_data_karfreitag %>%
+  ggplot(aes(x = uhrzeit)) +
+    geom_line(aes(y = globale_strahlung, colour = "Strahlung Flach")) +
+    geom_line(aes(y = strahlung_perfekte_nachfuehrung, colour = "Strahlung nachgeführt")) +
+  scale_colour_manual(values = c("blue", "red")) +
+  labs(
+    y = "Strahlung in J/cm^2",
+    x = "Uhrzeit",
+    colour = "Strahlungsart"
+  ) +
+  coord_cartesian(ylim = c(0, 250)) +
+  theme(legend.position = "bottom")
+```
+
+# Daten
+
+hier noch einmal die Daten, um die Ergebnisse nachvollziehen zu können:
+
+## Einstrahlungswerte
+
+```{r einstrahlungsdaten anzeigen}
+solar_data
+```
+
+## Winkel
+
+```{r Sonnenwinkeldaten anzeigen}
+solar_winkel
+```
+
