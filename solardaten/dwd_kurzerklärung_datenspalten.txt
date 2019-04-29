@@ -1,0 +1,6 @@
+MESS_DATUM	UTC: yyyymmddhhmi
+QN		Qualitätsniveau der Messung
+DS_10		10 Minuten Summe: diffuse solare Strahlung [J/cm2]
+GS_10		10 Minuten Summe: Globalstrahlung [J/cm2]
+SD_10		10 Minuten Summe: Sonnenscheindauer [h]
+LS_10		10 Minuten Summe: atmosphärische Gegenstrahlung [J/cm2]
