@@ -2,7 +2,7 @@
 title: "Statusbericht Bachelorprojekt"
 subtitle: "Berechnungen mit festen Daten"
 author: "Hendrik Obelöer"
-date: "29 April 2019"
+date: "13 May 2019"
 output:
   html_document:
     df_print: paged
@@ -126,16 +126,18 @@ Wir betrachten nur den Karfreitag 2019, weil dies für die Berechnungen erstmal 
 
 Für den gleichen Ort und Zeitraum werden die Position der Sonne benötigt. Dabei werden Daten dieser Webseite benutzt:  <https://www.sunearthtools.com/dp/tools/pos_sun.php>. Die Daten mit ihren 10-Minuten-Stempeln werden den Daten für die Sonneneinstrahlung zugeordnet.
 
-Die Sonnenwinkel sahen am letzten Freitag also so aus:
+Die Daten sind als räumlichen Polarkoordinaten gegeben, wobei der Azimuthwinkel von 0-360° ausgedrückt wird und Norden als 0° festgelegt ist. Der Höhenwinkel kann dementsprechend Werte von 0° bis +180° annehmen. Zur weiteren Berechnung werden diese beiden Winkelangaben werden in ein kartesisches NED-Koordinatensystem überführt.
+
+Die Sonnenwinkel sahen am Karfreitag also so aus:
 
 ```{r Daten visualisieren}
 ggplot(solar_winkel, aes(x = Azimuth, y = Elevation)) +
   geom_line(alpha = 0.5) +
   geom_point(size = 0.5) +
 #  geom_label(data = solar_winkel[seq(1, nrow(solar_winkel), 9),], aes(label = uhrzeit)) +
-  geom_label(data = filter(solar_winkel, Elevation == max(Elevation)), aes(label = uhrzeit)) +
-  geom_label(data = solar_winkel[1,], aes(label = uhrzeit)) +
-  geom_label(data = solar_winkel[nrow(solar_winkel),], aes(label = uhrzeit)) +
+  geom_label(data = filter(solar_winkel, Elevation == max(Elevation)), aes(label = uhrzeit), nudge_x = 30) +
+  geom_label(data = solar_winkel[1,], aes(label = uhrzeit), nudge_x = 30) +
+  geom_label(data = solar_winkel[nrow(solar_winkel),], aes(label = uhrzeit), nudge_x = 30) +
   labs(
     x = "Breitenwinkel",
     y = "Höhenwinkel"
@@ -143,10 +145,6 @@ ggplot(solar_winkel, aes(x = Azimuth, y = Elevation)) +
   scale_x_continuous(limits = c(0,360), breaks = c(0,90,180,270,360))
 
 ```
-
-# Umrechnung in kartesisches Koordinatensystem
-
-Die Daten sind als räumlichen Polarkoordinaten gegeben, wobei der Azimuthwinkel von 0-360° ausgedrückt wird und Norden als 0° festgelegt ist. Der Höhenwinkel kann dementsprechend Werte von -90° bis +90° annehmen. Diese beiden Winkelangaben werden in ein kartesisches NED-Koordinatensystem überführt.
 
 # Berechnung der projezierten Fläche
 
