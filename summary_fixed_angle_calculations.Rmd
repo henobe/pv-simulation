@@ -1,0 +1,174 @@
+---
+title: "Statusbericht Bachelorprojekt"
+author: "Hendrik Obelöer"
+date: "13 May 2019"
+subtitle: Berechnungen voreingestellter fester Winkel mit festen Daten
+---
+
+Aufbauend auf den ersten Berechnungen zu den Berechnungen einer flach liegenden Fläche soll dieser Ansatz nun für feste Winkel wiederholt werden.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load libraries, include=FALSE}
+source('load_libraries.R')
+```
+
+```{r load functions, include=FALSE}
+source('various_helper_functions.R')
+source('berechne_relative_kipplaenge.R')
+```
+
+
+# Veränderungen
+
+| Version  | Kommentar                | Datum     |
+|----------|--------------------------|-----------|
+| 1.0      | erste Version            | 13.05.19  |
+
+# Beispiel mit 4 Winkel
+
+Es werden die Bestrahlungsdaten für einen festen Kippwinkel simuliert.
+
+
+```{r Sonnenstrahlungsdaten laden, include=FALSE}
+solar_data <- read_delim('solardaten/solardaten_messtation-01975_20171026-20190428.txt', delim = ";") %>%
+  rename("qualitaet" = '  QN',
+         "diffuse_strahlung" = "DS_10",
+         "globale_strahlung" = "GS_10",
+         "sonnenscheindauer" = "SD_10",
+         "atmosphaerische_gegenstrahlung" = "LS_10") %>%
+  mutate_if(is.character, str_trim) %>%
+  mutate_if(is.character, as.numeric) %>%
+  mutate_at("MESS_DATUM", ymd_hm) %>%
+  mutate_at("MESS_DATUM", force_tz, tzone = "UTC") %>%
+  mutate("direkte_strahlung" = globale_strahlung - diffuse_strahlung)
+```
+
+```{r Sonnenwinkeldaten einlesen, include=FALSE}
+solar_winkel <- read_csv('solardaten/sonnenwinkel_20190419.csv', skip = 3) %>%
+  rename("uhrzeit" = "Stunde") %>%
+  mutate('datetime' = make_datetime(year = 2019L, month = 4L, day = 19L, hour = hour(uhrzeit), min = minute(uhrzeit))) %>%
+  mutate_at("datetime", force_tz, tzone = "Europe/Berlin") %>%
+  mutate('azimuth_rad' = wechsel_grad_zu_rad(Azimuth)) %>%
+  mutate_at('Elevation', function(x) x + 90) %>%  # Elevation Daten gehen vom Nullpunkt in der Horizontalen aus
+                                                  # nicht in Richtung "unten",90° Addition behebt das
+  mutate('elevation_rad' = wechsel_grad_zu_rad(Elevation)) %>%
+  mutate('kartesisch' = transpose(wechsel_polar_zu_kartesisch(azimuth = azimuth_rad, elevation = elevation_rad))) #%>%
+#  unnest(kartesisch) %>%
+#  group_by(datetime) %>% 
+#  mutate(key = row_number()) %>%
+#  spread(key, kartesisch) %>%
+#  rename("kart_x" = "1", "kart_y" = "2", "kart_z" = "3")
+```
+
+```{r Daten zu Karfreitag zusammenführen}
+solar_data_karfreitag <- solar_data %>%
+  inner_join(solar_winkel, by = c("MESS_DATUM" = "datetime"))# %>%
+```
+
+```{r flacher Winkel}
+position_vec <- list(0,0,-1) # flach liegend und vertikal nach oben mit Normalenvektor
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+#  filter(!is.na(uhrzeit)) %>%
+  mutate("flache_position" = transpose(position_vec)) %>%
+  mutate('flache_proj_flaeche' = mapply(berechne_skalarprodukt, kartesisch, flache_position)) %>%
+  select("MESS_DATUM", "direkte_strahlung", "kartesisch", "flache_proj_flaeche")
+```
+
+```{r fester Kippwinkel TEST, eval=FALSE, include=FALSE}
+position_vec5 <- wechsel_polar_zu_kartesisch(wechsel_grad_zu_rad(180), wechsel_grad_zu_rad(95))
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+#  filter(!is.na(uhrzeit)) %>%
+  mutate("fuenf_grad" = transpose(position_vec5)) %>%
+  mutate('fuenf_grad_flaeche' = mapply(berechne_skalarprodukt, kartesisch, fuenf_grad)) %>%
+  select(-"fuenf_grad")
+
+position_vec10 <- wechsel_polar_zu_kartesisch(wechsel_grad_zu_rad(180), wechsel_grad_zu_rad(90 + 10))
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+#  filter(!is.na(uhrzeit)) %>%
+  mutate('zehn_grad_flaeche' = mapply(berechne_skalarprodukt, kartesisch, transpose(position_vec10)))
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+#  filter(!is.na(uhrzeit)) %>%
+  mutate("zehn_grad" = transpose(position_vec10)) %>%
+  mutate('zehn_grad_flaeche2' = mapply(berechne_skalarprodukt, kartesisch, zehn_grad)) %>%
+  select(-"zehn_grad")
+
+#position_vec15 <- )
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+#  filter(!is.na(uhrzeit)) %>%
+ # mutate("zehn_grad" = transpose(position_vec10)) %>%
+  mutate('fuenfzehn_grad_flaeche' = mapply(berechne_skalarprodukt, kartesisch, gib_panelwinkel_in_skalar(15)))
+ # select(-"zehn_grad")
+
+position_vec20 <- wechsel_polar_zu_kartesisch(wechsel_grad_zu_rad(180), wechsel_grad_zu_rad(110))
+
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+#  filter(!is.na(uhrzeit)) %>%
+  mutate("zwanzig_grad" = transpose(position_vec20)) %>%
+  mutate('zwanzig_grad_flaeche' = mapply(berechne_skalarprodukt, kartesisch, zwanzig_grad)) %>%
+  select(-"zwanzig_grad")
+
+```
+
+
+```{r projezierte Flaechen}
+
+#lapply(gib_panelwinkel_in_skalar(0), function(x) -x)
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+  mutate('fuenfzehn_grad_flaeche' = mapply(berechne_skalarprodukt, kartesisch, gib_panelwinkel_in_skalar(15))) %>%
+  mutate('dreißig_grad_flaeche' = mapply(berechne_skalarprodukt, kartesisch, gib_panelwinkel_in_skalar(30))) %>%
+  mutate('fuenfundvierzig_grad_flaeche' = mapply(berechne_skalarprodukt, kartesisch, gib_panelwinkel_in_skalar(45))) %>%
+  mutate('sechzig_grad_flaeche' = mapply(berechne_skalarprodukt, kartesisch, gib_panelwinkel_in_skalar(60)))
+```
+
+```{r Erbeutete Energie errechnen}
+solar_data_karfreitag <- solar_data_karfreitag %>%
+  mutate('strahlung_perfekte_nachfuehrung' = direkte_strahlung*1/flache_proj_flaeche) %>%
+  mutate('strahlung_15grad_kippung' = direkte_strahlung*fuenfzehn_grad_flaeche/flache_proj_flaeche) %>%
+  mutate('strahlung_30grad_kippung' = direkte_strahlung*dreißig_grad_flaeche/flache_proj_flaeche) %>%
+  mutate('strahlung_45grad_kippung' = direkte_strahlung*fuenfundvierzig_grad_flaeche/flache_proj_flaeche) %>%
+  mutate('strahlung_60grad_kippung' = direkte_strahlung*sechzig_grad_flaeche/flache_proj_flaeche)
+  
+```
+
+```{r eval=FALSE, include=FALSE}
+mapply(berechne_skalarprodukt, solar_data_karfreitag$kartesisch, gib_panelwinkel_in_skalar(0))
+
+solar_data_karfreitag %>%
+  select("direkte_strahlung", "fuenfzehn_grad_flaeche", "flache_proj_flaeche","strahlung_15grad_kippung")
+```
+
+
+```{r Visualisierung}
+ggplot(solar_data_karfreitag, aes(x = MESS_DATUM)) +
+  geom_line(aes(y = direkte_strahlung, colour = "Strahlung Flach")) +
+  geom_line(aes(y = strahlung_perfekte_nachfuehrung, colour = "Strahlung nachgeführt")) +
+  geom_line(aes(y = strahlung_15grad_kippung,  colour = "Strahlung 15° gekippt")) +
+  geom_line(aes(y = strahlung_30grad_kippung, colour = "Strahlung 30° gekippt")) +
+  geom_line(aes(y = strahlung_45grad_kippung, colour = "Strahlung 45° gekippt")) +
+  geom_line(aes(y = strahlung_60grad_kippung, colour = "Strahlung 60° gekippt")) +
+  #scale_colour_manual(values = c("blue", "red")) +
+  labs(
+    y = "Strahlung in J/cm^2",
+    x = "Uhrzeit",
+    colour = "Strahlungsart"
+    ) +
+  theme(legend.position = "bottom")
+```
+
+
+# Optimierung auf den optimalen Winkel
+
+```{r Summierung}
+
+```
+
