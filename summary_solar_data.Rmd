@@ -27,7 +27,7 @@ source('berechne_relative_kipplaenge.R')
 | Version  | Kommentar                | Datum     |
 |----------|--------------------------|-----------|
 | 1.0      | erste Version            | 29.04.19  |
-| 2.0      | - Benutzung von Direktstrahlung anstatt Globalstrahlung <br>- Neuer Ansatz zur Berechnung der Projektionsfläche über kartesische Koordinaten und Reduzierung auf Eindimensionalität <br>- Korrektur der Zeitzone bei Strahlungsdaten (von UTC zu MESZ)           | 01.05.19  |
+| 2.0      | - Benutzung von Direktstrahlung anstatt Globalstrahlung <br>- Neuer Ansatz zur Berechnung der Projektionsfläche über kartesische Koordinaten und Reduzierung auf Eindimensionalität <br>- Korrektur der Zeitzone bei Strahlungsdaten (von UTC zu MESZ)           | 13.05.19  |
 
 # Daten vom deutschen Wetterdienst
 
@@ -52,6 +52,7 @@ solar_data <- read_delim('solardaten/solardaten_messtation-01975_20171026-201904
   mutate_if(is.character, str_trim) %>%
   mutate_if(is.character, as.numeric) %>%
   mutate_at("MESS_DATUM", ymd_hm) %>%
+  mutate_at("MESS_DATUM", force_tz, tzone = "UTC") %>%
   mutate("direkte_strahlung" = globale_strahlung - diffuse_strahlung)
 ```
 
@@ -59,6 +60,7 @@ solar_data <- read_delim('solardaten/solardaten_messtation-01975_20171026-201904
 solar_winkel <- read_csv('solardaten/sonnenwinkel_20190419.csv', skip = 3) %>%
   rename("uhrzeit" = "Stunde") %>%
   mutate('datetime' = make_datetime(year = 2019L, month = 4L, day = 19L, hour = hour(uhrzeit), min = minute(uhrzeit))) %>%
+  mutate_at("datetime", force_tz, tzone = "Europe/Berlin") %>%
   mutate('azimuth_rad' = wechsel_grad_zu_rad(Azimuth)) %>%
   mutate_at('Elevation', function(x) x + 90) %>%  # Elevation Daten gehen vom Nullpunkt in der Horizontalen aus
                                                   # nicht in Richtung "unten",90° Addition behebt das
@@ -73,18 +75,44 @@ solar_winkel <- read_csv('solardaten/sonnenwinkel_20190419.csv', skip = 3) %>%
 
 ```{r Daten zu Karfreitag zusammenführen}
 solar_data_karfreitag <- solar_data %>%
-  filter(year(MESS_DATUM) == 2019, month(MESS_DATUM) == 4, mday(MESS_DATUM) == 19) %>%
-  mutate('MESS_DATUM_MESZ' = MESS_DATUM + hours(2)) %>%  # Umrechnung von UTC auf Hamburgische Sommerzeit (UTC+2)
-  left_join(solar_winkel, by = c("MESS_DATUM_MESZ" = "datetime"))
+  #filter(year(MESS_DATUM) == 2019, month(MESS_DATUM) < 6, month(MESS_DATUM) > 2,  mday(MESS_DATUM) == 19) %>%
+  #mutate('MESS_DATUM_MESZ' = MESS_DATUM + hours(2)) %>%  # Umrechnung von UTC auf Hamburgische Sommerzeit (UTC+2)
+  #left_join(solar_winkel, by = c("MESS_DATUM_MESZ" = "datetime"))
+  inner_join(solar_winkel, by = c("MESS_DATUM" = "datetime"))# %>%
+#  mutate_at("datetime", with_tz, tzone = "Europe/Berlin")
 ```
+
+```{r Test Datumsmanipulation, eval=FALSE, include=FALSE}
+
+test2 <- solar_winkel %>% 
+  inner_join(solar_data, by = c("datetime" = "MESS_DATUM")) %>%
+  mutate_at("datetime", with_tz, tzone = "Europe/Berlin")
+
+testwinkel <- solar_winkel %>%
+  mutate("date_temp" = datetime)
+
+test <- solar_data %>%
+  filter(year(MESS_DATUM) == 2019, month(MESS_DATUM) < 6, month(MESS_DATUM) > 2,  mday(MESS_DATUM) == 19) %>%
+  #mutate('MESS_DATUM_MESZ' = MESS_DATUM + hours(2)) %>%  # Umrechnung von UTC auf Hamburgische Sommerzeit (UTC+2)
+  #left_join(solar_winkel, by = c("MESS_DATUM_MESZ" = "datetime"))
+  #left_join(testwinkel, by = c("MESS_DATUM" = "datetime")) %>%
+  inner_join(testwinkel, by = c("MESS_DATUM" = "datetime"))# %>%
+  #select(MESS_DATUM, date_temp)
+
+```
+
 
 Wir betrachten nur den Karfreitag 2019, weil dies für die Berechnungen erstmal reicht und dieser Tag ein besonders wolkenloser Tag war. Die gemessenen Strahlungswerte an diesem Tag sehen wie folgt aus:
 
 ```{r Visualisierung}
   ggplot(solar_data_karfreitag) +
-    geom_line(aes(x = MESS_DATUM_MESZ, y = globale_strahlung, colour = "Globale Strahlung")) +
-    geom_line(aes(x = MESS_DATUM_MESZ, y = diffuse_strahlung, colour = "Diffuse Strahlung")) +
-    geom_line(aes(x = MESS_DATUM_MESZ, y = direkte_strahlung, colour = "Direkte Strahlung")) +
+    geom_line(aes(x = MESS_DATUM, y = globale_strahlung, colour = "Globale Strahlung")) +
+    geom_line(aes(x = MESS_DATUM, y = diffuse_strahlung, colour = "Diffuse Strahlung")) +
+    geom_line(aes(x = MESS_DATUM, y = direkte_strahlung, colour = "Direkte Strahlung")) +
+
+#    geom_line(aes(x = MESS_DATUM_MESZ, y = globale_strahlung, colour = "Globale Strahlung")) +
+#    geom_line(aes(x = MESS_DATUM_MESZ, y = diffuse_strahlung, colour = "Diffuse Strahlung")) +
+#    geom_line(aes(x = MESS_DATUM_MESZ, y = direkte_strahlung, colour = "Direkte Strahlung")) +
 #  scale_colour_manual(values = c("blue", "red")) +
   labs(
     y = "Strahlung in J/cm^2",
