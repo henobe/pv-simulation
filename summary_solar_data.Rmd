@@ -21,6 +21,14 @@ source('various_helper_functions.R')
 source('berechne_relative_kipplaenge.R')
 ```
 
+
+# Veränderungen
+
+| Version  | Kommentar                | Datum     |
+|----------|--------------------------|-----------|
+| 1.0      | erste Version            | 29.04.19  |
+| 2.0      | - Benutzung von Direktstrahlung anstatt Globalstrahlung <br>- Neuer Ansatz zur Berechnung der Projektionsfläche über kartesische Koordinaten und Reduzierung auf Eindimensionalität <br>- Korrektur der Zeitzone bei Strahlungsdaten (von UTC zu MESZ)           | 01.05.19  |
+
 # Daten vom deutschen Wetterdienst
 
 Zuerst werden tatsächliche Solardaten über diesen Link vom deutschen Wetterdienst besorgt: <ftp://ftp-cdc.dwd.de/pub/CDC/observations_germany/climate/10_minutes/solar/recent/>.
@@ -43,30 +51,41 @@ solar_data <- read_delim('solardaten/solardaten_messtation-01975_20171026-201904
          "atmosphaerische_gegenstrahlung" = "LS_10") %>%
   mutate_if(is.character, str_trim) %>%
   mutate_if(is.character, as.numeric) %>%
-  mutate_at("MESS_DATUM", ymd_hm)
+  mutate_at("MESS_DATUM", ymd_hm) %>%
+  mutate("direkte_strahlung" = globale_strahlung - diffuse_strahlung)
 ```
 
 ```{r Sonnenwinkeldaten einlesen, include=FALSE}
 solar_winkel <- read_csv('solardaten/sonnenwinkel_20190419.csv', skip = 3) %>%
   rename("uhrzeit" = "Stunde") %>%
   mutate('datetime' = make_datetime(year = 2019L, month = 4L, day = 19L, hour = hour(uhrzeit), min = minute(uhrzeit))) %>%
-  mutate('azimuth_funktionskonform' = wechsel_grad_zu_rad(Azimuth - 90)) %>%
-  mutate('elevation_funktionskonform' = wechsel_grad_zu_rad(Elevation))
+  mutate('azimuth_rad' = wechsel_grad_zu_rad(Azimuth)) %>%
+  mutate_at('Elevation', function(x) x + 90) %>%  # Elevation Daten gehen vom Nullpunkt in der Horizontalen aus
+                                                  # nicht in Richtung "unten",90° Addition behebt das
+  mutate('elevation_rad' = wechsel_grad_zu_rad(Elevation)) %>%
+  mutate('kartesisch' = transpose(wechsel_polar_zu_kartesisch(azimuth = azimuth_rad, elevation = elevation_rad))) #%>%
+#  unnest(kartesisch) %>%
+#  group_by(datetime) %>% 
+#  mutate(key = row_number()) %>%
+#  spread(key, kartesisch) %>%
+#  rename("kart_x" = "1", "kart_y" = "2", "kart_z" = "3")
 ```
 
 ```{r Daten zu Karfreitag zusammenführen}
 solar_data_karfreitag <- solar_data %>%
   filter(year(MESS_DATUM) == 2019, month(MESS_DATUM) == 4, mday(MESS_DATUM) == 19) %>%
-  left_join(solar_winkel, by = c("MESS_DATUM" = "datetime"))
+  mutate('MESS_DATUM_MESZ' = MESS_DATUM + hours(2)) %>%  # Umrechnung von UTC auf Hamburgische Sommerzeit (UTC+2)
+  left_join(solar_winkel, by = c("MESS_DATUM_MESZ" = "datetime"))
 ```
 
-Wir betrachten nur den Karfreitag letzter Woche, weil dies für die Berechnungen erstmal reicht und dieser Tag ein besonders wolkenloser Tag war. Die gemessenen Strahlungswerte an diesem Tag sind hier visualisiert:
+Wir betrachten nur den Karfreitag 2019, weil dies für die Berechnungen erstmal reicht und dieser Tag ein besonders wolkenloser Tag war. Die gemessenen Strahlungswerte an diesem Tag sehen wie folgt aus:
 
 ```{r Visualisierung}
   ggplot(solar_data_karfreitag) +
-    geom_line(aes(x = MESS_DATUM, y = globale_strahlung, colour = "Globale Strahlung")) +
-    geom_line(aes(x = MESS_DATUM, y = diffuse_strahlung, colour = "Diffuse Strahlung")) +
-  scale_colour_manual(values = c("blue", "red")) +
+    geom_line(aes(x = MESS_DATUM_MESZ, y = globale_strahlung, colour = "Globale Strahlung")) +
+    geom_line(aes(x = MESS_DATUM_MESZ, y = diffuse_strahlung, colour = "Diffuse Strahlung")) +
+    geom_line(aes(x = MESS_DATUM_MESZ, y = direkte_strahlung, colour = "Direkte Strahlung")) +
+#  scale_colour_manual(values = c("blue", "red")) +
   labs(
     y = "Strahlung in J/cm^2",
     x = "Uhrzeit",
@@ -97,24 +116,62 @@ ggplot(solar_winkel, aes(x = Azimuth, y = Elevation)) +
 
 ```
 
-# Berechnung der relativen "Schattenlänge"
+# Umrechnung in kartesisches Koordinatensystem
 
-Zu jedem Zeitpunkt wird die relative "Schattenlänge" bzw. relative Menge an Licht, die bei einer gekippten Fläche im Vergleich zu einer flachen aufgefangen wird, berechnet. Höhen- und Azimuthwinkel werden getrennt betrachtet. Beide Faktoren werden für die Flächenbetrachtung multipliziert.
+Die Daten sind als räumlichen Polarkoordinaten gegeben, wobei der Azimuthwinkel von 0-360° ausgedrückt wird und Norden als 0° festgelegt ist. Der Höhenwinkel kann dementsprechend Werte von -90° bis +90° annehmen. Diese beiden Winkelangaben werden in ein kartesisches NED-Koordinatensystem überführt.
 
-Bei dieser Berechnung ist aufgefallen, dass noch ein Denkfehler in der bisherigen Berechnung verborgen bliebt. Dies hat mit Winkeln zu tun, bei denen die Sonne mehr als 180° an einem Tag ausfüllt, dies passiert jedoch zwischen März und September in den Breitenwinkeln.
+# Berechnung der projezierten Fläche
 
-Um die weitere Funktionsweise zu testen, wurden die Daten gefiltert, sodass nur Daten Winkel größer 0° und kleiner 180° betrachtet wurden.
+Zu jedem Zeitpunkt wird die relative "Schattenlänge" bzw. relative Menge an Licht berechnet.
 
-Es sind die relativen "Gewinne" an Strahlungsfläche visualisiert:
+Dabei wird das Skalarprodukt des Normalenvektors der Ausrichtung des Panels und des Einstrahlvektors der Sonne berechnet. Dieser Wert gibt den Anteil an Strahlungsenergie an, den die gekippte Fläche im Vergleich zur perfekt nachgeführten Fläche hat.
 
-```{r Schattenberechnung}
-mock_winkel_vector <- ifelse(90 < solar_data_karfreitag$Azimuth & solar_data_karfreitag$Azimuth < 270, solar_data_karfreitag$azimuth_funktionskonform, NA)
+```{r Berechnung flache Lage}
+position_vec <- list(0,0,-1) # flach liegend und vertikal nach oben mit Normalenvektor
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+  filter(!is.na(uhrzeit)) %>%
+  mutate("position" = transpose(position_vec)) %>%
+  mutate('relative_schattenflaeche' = mapply(berechne_skalarprodukt, kartesisch, position))
+
+
+#  mutate('rel_flaeche' = apply(kartesisch[[45]], position, FUN = berechne_skalarprodukt))
+
+#(solar_data_karfreitag$kartesisch, solar_data_karfreitag$position, FUN = berechne_skalarprodukt)
+
+#sapply(solar_data_karfreitag$kartesisch, position_vec, FUN = berechne_skalarprodukt)
+
+#mapply(berechne_skalarprodukt, solar_data_karfreitag$kartesisch, solar_data_karfreitag$position)
+
+
+#solar_data_karfreitag <- solar_data_karfreitag %>%
+#  mutate("position" = transpose(position)) %>%
+  
+  # PROBLEM: Bei "unlist" wird die gesamte Liste unlisted und NULL Argumente entfernt. 
+  # Wir braucne aber vector, der vectoren enthält... also genau eine Liste.
+  
+#  mutate("anteil_projezierte_flaeche" = berechne_skalarprodukt(position, kartesisch))# %>%
+#  mutate("relative_schattenflaeche" = abs(azimuth_relation_perfekt) * abs(elevation_relation_perfekt)) %>%
+#  mutate("strahlung_perfekte_nachfuehrung" = relative_schattenflaeche * direkte_strahlung)
+
+ggplot(solar_data_karfreitag, aes(x = uhrzeit, y = relative_schattenflaeche)) +
+    geom_line() +
+    labs(x = "Uhrzeit",
+         y = "relative Schattenfläche",
+         title = "Anteil Strahlnug eines flach liegenden Panels gegenüber eines nachgeführten")
+
+```
+
+
+```{r Schattenberechnung, eval=FALSE, include=FALSE}
+#mock_winkel_vector <- ifelse(90 < solar_data_karfreitag$Azimuth & solar_data_karfreitag$Azimuth < 270, solar_data_karfreitag$azimuth_funktionskonform, NA)
 
 solar_data_karfreitag <- solar_data_karfreitag %>%
   mutate("azimuth_relation_perfekt" = berechne_relative_kipplaenge(mock_winkel_vector)) %>%
   mutate("elevation_relation_perfekt" = berechne_relative_kipplaenge(solar_data_karfreitag$elevation_funktionskonform)) %>%
   mutate("relative_schattenflaeche" = abs(azimuth_relation_perfekt) * abs(elevation_relation_perfekt)) %>%
-  mutate("strahlung_perfekte_nachfuehrung" = relative_schattenflaeche * globale_strahlung)
+  mutate("strahlung_perfekte_nachfuehrung" = relative_schattenflaeche * direkte_strahlung) %>%
+  
 
 ggplot(solar_data_karfreitag, aes(x = uhrzeit, y = relative_schattenflaeche)) +
     geom_line() +
@@ -122,17 +179,21 @@ ggplot(solar_data_karfreitag, aes(x = uhrzeit, y = relative_schattenflaeche)) +
          y = "relative Schattenfläche")
 ```
 
-Dies ist natürlich wenig aufschlussreich da gerade zu Morgen- und Abendstunden die Sonne mit einer niedrigen Intensität scheint. 
+```{r Umführung in Effizienzgewinn}
+solar_data_karfreitag <- solar_data_karfreitag %>%
+  mutate('strahlung_perfekte_nachfuehrung' = direkte_strahlung/relative_schattenflaeche)
+```
+
 
 # Vergleich von "Strahlungsertrag"
 
-Multipliziert man den relativen Strahlungsgewinn nun mit den Solardaten aus dem ersten Grafen (Globalstrahlung), kann man den Gewinn an Ertrag bereits besser erkennen:
+Die gemessenen Strahlungsdaten beziehen sich stets auf eine flach liegende Fläche. Durch die Multiplikation von Einstrahlungsdaten mit dem Kehrwert des Skalarproduktes der flach liegenden Fläche, kann die aufgefangene Strahlungsenergie der nachgeführten Fläche berechnet werden.
 
 ```{r Visualisierung Strahlungsgewinn}
 solar_data_karfreitag %>%
   ggplot(aes(x = uhrzeit)) +
-    geom_line(aes(y = globale_strahlung, colour = "Strahlung Flach")) +
-    geom_line(aes(y = strahlung_perfekte_nachfuehrung, colour = "Strahlung nachgeführt")) +
+    geom_line(aes(y = direkte_strahlung, colour = "Strahlung Direkt Flach")) +
+    geom_line(aes(y = strahlung_perfekte_nachfuehrung, colour = "Strahlung Direkt nachgeführt")) +
   scale_colour_manual(values = c("blue", "red")) +
   labs(
     y = "Strahlung in J/cm^2",
@@ -143,22 +204,6 @@ solar_data_karfreitag %>%
 
 ```
 
-Es ist zu beachten: die Berechnung des nachgeführten Daten wurde abgeschnitten am Morgen und Abend, weil dort noch ein Berechnungsfehler vorliegt. Dennoch scheint der extreme Mehrgewinn am Morgen noch sehr untypisch zu sein. Konzentriert man sich auf die weiteren Daten sieht der Graf so aus: 
-
-```{r Visualisierung Strahlungsgewinn clipped}
-solar_data_karfreitag %>%
-  ggplot(aes(x = uhrzeit)) +
-    geom_line(aes(y = globale_strahlung, colour = "Strahlung Flach")) +
-    geom_line(aes(y = strahlung_perfekte_nachfuehrung, colour = "Strahlung nachgeführt")) +
-  scale_colour_manual(values = c("blue", "red")) +
-  labs(
-    y = "Strahlung in J/cm^2",
-    x = "Uhrzeit",
-    colour = "Strahlungsart"
-  ) +
-  coord_cartesian(ylim = c(0, 250)) +
-  theme(legend.position = "bottom")
-```
 
 # Daten
 
@@ -175,4 +220,3 @@ solar_data
 ```{r Sonnenwinkeldaten anzeigen}
 solar_winkel
 ```
-
