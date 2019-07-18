@@ -1,14 +1,16 @@
 # Collection of small reusable functions
 
-wechsel_grad_zu_rad <- function(value){
+grad_zu_rad <- function(value){
   value*pi/180
 }
 
-wechsel_rad_zu_grad <- function(x){
+
+rad_zu_grad <- function(x){
   x*180/pi
 }
 
-wechsel_polar_zu_kartesisch <- function(azimuth, elevation, length=1){
+
+polar_zu_kartesisch <- function(azimuth, elevation, length=1){
   # NED-System:
   # x zeigt nach Norden, also azimuth = 0, elevation = 90
   # y zeigt nach Osten, also azimuth = 90, elevation = 90
@@ -35,21 +37,14 @@ wechsel_polar_zu_kartesisch <- function(azimuth, elevation, length=1){
   list(x, y, z)
 }
 
-berechne_skalarprodukt <- function(vector_a, vector_b){
-  vector_a <- unlist(vector_a)
-  vector_b <- unlist(vector_b)
-  
-  drop(vector_a %*% vector_b)
-}
 
 berechne_normalenvektor_zur_sonne <- function(kippwinkel=0, diffsuedwinkel=0){
   elevation <- wechsel_grad_zu_rad(90 - kippwinkel)
   azimuth <- wechsel_grad_zu_rad(180 + diffsuedwinkel)
-  
-  
 }
 
-gib_panelwinkel_in_skalar <- function(kippwinkel = 0){
+
+berechne_panelwinkel_in_skalar <- function(kippwinkel = 0){
   
   transpose((wechsel_polar_zu_kartesisch(pi, wechsel_grad_zu_rad(180-kippwinkel))))
   
@@ -61,4 +56,38 @@ gib_panelwinkel_in_skalar <- function(kippwinkel = 0){
   #data <- lapply(data, function(x) -x)
   
   #transpose(data)
+}
+
+
+skalarprodukt <- function(vector_a, vector_b){
+  vector_a <- unlist(vector_a)
+  vector_b <- unlist(vector_b)
+  
+  drop(vector_a %*% vector_b)
+}
+
+
+kreuzprodukt <- function(...) {
+  # source: https://stackoverflow.com/questions/36798301/r-compute-cross-product-of-vectors-physics
+  
+    args <- list(...)
+  
+  # Check for valid arguments
+  if (length(args) == 0) {
+    stop("No data supplied")
+  }
+  len <- unique(sapply(args, FUN=length))
+  if (length(len) > 1) {
+    stop("All vectors must be the same length")
+  }
+  if (len != length(args) + 1) {
+    stop("Must supply N-1 vectors of length N")
+  }
+  
+  # Compute generalized cross product by taking the determinant of sub-matricies
+  m <- do.call(rbind, args)
+  sapply(seq(len),
+         FUN=function(i) {
+           det(m[,-i,drop=FALSE]) * (-1)^(i+1)
+         })
 }
