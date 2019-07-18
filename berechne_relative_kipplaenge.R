@@ -6,7 +6,7 @@ berechne_relative_kipplaenge <- function(einstrahlwinkel, kippwinkel = (pi/2 - e
   einstrahlwinkel <- ifelse((einstrahlwinkel %% pi) == 0, NaN, einstrahlwinkel)
   # Division mit 0 vermeiden
   
-  relative_length <- (sin(einstrahlwinkel + kippwinkel) / sin(einstrahlwinkel))
+  sin(einstrahlwinkel + kippwinkel) / sin(einstrahlwinkel)
   # see documentation for reason behind calculation
 
   # Issues: 

@@ -1,0 +1,24 @@
+# Strahlung - Solarenergie 
+
+Beschreibung Globalstrahlung vom DWD
+
+https://www.dwd.de/DE/leistungen/solarenergie/solarenergie.html
+
+Regenerative Energien – Globalstrahlung: Summe aus direkter und diffuser Sonnenstrahlung
+Kenntnis über die Sonneneinstrahlung ist von elementarer Bedeutung für den wirtschaftlichen Betrieb von Solaranlagen
+
+Die meteorologische Größe Globalstrahlung  ist im Vergleich zu den Parametern Temperatur und Niederschlag eine vergleichsweise junge Messgröße. Die längste in Deutschland bestehende Zeitreihe beginnt 1937 an der Station Potsdam. In der Zeit zwischen 1975 und 1980 wurde dann im Deutschen Wetterdienst systematisch ein Messnetz mit Strahlungssensorik eingerichtet. Dieses Messnetz wurde in den folgenden Jahren immer wieder dem technischen Standard angepasst.
+
+Die Globalstrahlung ist ein Parameter der sich aus den Anteilen der direkten schattengebenden Sonnenstrahlung und der diffusen Sonnenstrahlung zusammensetzt. Standardmäßig wird die Globalstrahlung und die diffuse Strahlung auf die horizontale Ebene bezogen gemessen. Aus beiden Komponenten lässt sich dann die direkte Sonnenstrahlung ableiten.
+
+Der Deutsche Wetterdienst stellt die Strahlungsdaten (global, diffus) auf der Grundlage von hochwertigen Pyranometermessungen auf Stundenbasis entgeltfrei zur Verfügung. Daneben stehen sogenannte Rasterwerte der Globalstrahlung in einer Auflösung von 1 km für Deutschland zur Verfügung. Grundlage bilden satellitenabgeleitete Strahlungsdaten, die über Bodenmessungen angepasst werden. Sie sind als aktuelle Monats- und Jahreswerte ab 1991 sowie als vieljährige mittlere monatliche und jährliche Werte für die Bezugsperiode 1981 – 2010 ebenfalls kostenfrei als Download erhältlich. Die genannten Daten werden als ganz Deutschland umfassende Datensätze bereitgestellt. Die Angaben für spezielle Punkte innerhalb Deutschlands können über die Anwendung WESTE-Solar über den Wettershop des Deutschen Wetterdienstes oder direkt über das Regionale Klimabüro (RKB) Hamburg des Deutschen Wetterdienstes gegen ein Entgelt bezogen werden. Beim RKB kann ebenfalls eine Umrechnung der horizontalen Werte auf die orientierte und geneigte Fläche in Auftrag geben werden.
+
+Darüber hinaus wird die aktuelle räumliche Verteilung der Globalstrahlung monatlich und jährlich kartenmäßig aufbereitet ebenfalls der Allgemeinheit zur Verfügung gestellt.
+Seit dem 01.01.2016 werden auch Rasterwerte sowie Deutschlandkarten der Diffus- und Direktstrahlung vom DWD monatlich und jährlich zur Verfügung gestellt. Vieljährige Mittelwerte werden vorerst nicht berechnet.
+
+Einen zusammenfassenden, deutschlandweitgemittelten Überblick über die Entwicklung der solaren Einstrahlung stellt der DWD für das laufende Jahr monatlich aktualisiert bereit.
+
+Im Rahmen des europäischen Verbundprojektes der EUMETSAT CM SAF werden vom Deutschen Wetterdienst auch weltweite Strahlungsdaten erstellt und vertrieben.  Diese Daten basieren auf Satellitenbeobachtungen von geostationären oder polar-umlaufenden Satelliten. Für Europa, Afrika, sowie den östlichen Teil Südamerikas liegen zur Zeit Daten der Global- und Direktstrahlung in halbstündlicher, täglicher und monatlicher Auflösung von 1983 bis 2017 mit einer räumlichen Auflösung von 0.05° vor (Surface Radiation Data Set – Heliosat (SARAH) - Edition 2.1).
+Globale Daten der Globalstrahlung von 1982 bis 2015 liegen in einer Auflösung von 0.25° vor (CM SAF CLARA–A2: AVHRR). Aktuelle Daten der Global- und Direktstrahlung für Europa, Afrika und das östliche Südamerika werden mit einer Verzögerung zwischen 1 Woche und 2 Monaten bereit gestellt.
+
+Die Daten des CM SAF sind frei verfügbar und werden als gegitterte netcdf-Daten über das CM SAF Web User Interface verteilt (siehe weiterführende Links). 
