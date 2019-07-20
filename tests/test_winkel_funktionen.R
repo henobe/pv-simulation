@@ -71,7 +71,7 @@ test_that("Skalarprodukt im kartesischen Raum", {
 })
 
 
-test_that("Kreuzprodukt zweier Vektoren", {
+test_that("Skalarprodukt zweier Vektoren", {
   vektor_a <- c(1,2,3)
   vektor_b <- c(2.4,3.1,4.7)
   vektor_c <- list(3,4,5)
