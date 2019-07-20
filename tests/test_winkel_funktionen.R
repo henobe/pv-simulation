@@ -1,4 +1,4 @@
-# Testen der Winkelfunktionen(helper functions) 
+# Testen der Winkelfunktionen (helper functions) 
 library(testthat)
 source('funktionen_helper_winkel.R')
 
