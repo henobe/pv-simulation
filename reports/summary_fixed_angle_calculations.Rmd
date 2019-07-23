@@ -1,7 +1,10 @@
 ---
 title: "Statusbericht Bachelorprojekt"
 author: "Hendrik Obelöer"
-date: "13 May 2019"
+date: "23 July 2019"
+output:
+  html_document:
+    df_print: paged
 subtitle: Berechnungen voreingestellter fester Winkel mit festen Daten
 ---
 
@@ -16,6 +19,7 @@ knitr::opts_chunk$set(echo = FALSE)
 source('../load_libraries.R')
 source('../funktionen_helper_winkel.R')
 source('../funktionen_winkel_solarpanel.R')
+source('../berechne_gesamte_strahlungsenergie.R')
 ```
 
 
@@ -25,7 +29,8 @@ source('../funktionen_winkel_solarpanel.R')
 |----------|--------------------------|-----------|
 | 1.0      | erste Version            | 13.05.19  |
 | 1.1      | Folgeänderungen von Winkelfunktionen            | 20.07.19  |
-| 1.2      | Umstellung der benutzten Funktionen| 23.07.19 |
+| 1.2      | Umstellung der benutzten Funktionen | 23.07.19 |
+| 2.0      | Erweiterung durch Vergleich von Winkeln und Optimierung | 23.07.19 |
 
 
 
@@ -92,8 +97,65 @@ ggplot(solar_data_karfreitag, aes(x = MESS_DATUM)) +
 ```
 
 
-# Optimierung auf den optimalen Winkel
+# Vergleich von Kipp- und Drehwinkeln
+```{r Vergleich von Kipp- und Drehwinkeln}
+helper_rel_flaeche <- function(dreh, kipp){
+  berechne_relative_einstrahlflaeche(solar_data_karfreitag$kartesisch,
+                                     berechne_normalenvektor_panel(drehwinkel = dreh,
+                                                                   kippwinkel = kipp,
+                                                                   radiant = FALSE))
+}
+
+helper_summe <- function(dreh, kipp){
+  berechne_gesamte_strahlungsenergie(solar_data_karfreitag$direkte_strahlung,
+                                     helper_rel_flaeche(dreh, kipp))
+}
+
+summe_perf_nachfuerung <- berechne_gesamte_strahlungsenergie(
+  solar_data_karfreitag$direkte_strahlung,
+  berechne_relative_einstrahlflaeche(solar_data_karfreitag$kartesisch, nachfuehrung = TRUE))
+
+grid <- expand.grid(
+  a1 = seq(-15, 15, length = 31),
+  a2 = seq(0, 60, length = 61)
+  ) %>% 
+  mutate(einstrahlung = purrr::map2_dbl(a1, a2, helper_summe))
+
+grid %>%
+  ggplot(aes(a1, a2)) +
+  geom_point(data = filter(grid, rank(einstrahlung) >= length(einstrahlung) - 10), size = 4, colour = "red") +
+  geom_point(aes(colour = einstrahlung)) +
+  scale_colour_distiller(type = "seq", direction = 1) +
+  labs(title = "Vergleich von Dreh- und Kippwinkeln",
+       x = "Drehwinkel in Grad",
+       y = "Kippwinkel in Grad",
+       colour = "Einstrahlungsenergie",
+       caption = paste("Besten 10 markiert, Einstrahlungsenergie der Nachführung liegt bei ", round(summe_perf_nachfuerung), ".", sep = "")) 
+```
+
+
+# Analytische Optimierung des Dreh- und Kippwinkels
 
 ```{r Summierung}
+helper_optim <- function(x){
+  helper_summe(x[1], x[2])
+}
 
+optimised_angles <- optim(c(0,30), helper_optim, control = list(fnscale = -1))
+
+solar_data_karfreitag <- solar_data_karfreitag %>%
+  mutate('strahlung_beste_kippung' = direkte_strahlung*berechne_relative_einstrahlflaeche(kartesisch, berechne_normalenvektor_panel(drehwinkel = optimised_angles$par[1], kippwinkel = optimised_angles$par[2], radiant = FALSE)))
+
+ggplot(solar_data_karfreitag, aes(x = MESS_DATUM)) +
+  geom_line(aes(y = direkte_strahlung, colour = "Strahlung Flach")) +
+  geom_line(aes(y = strahlung_perfekte_nachfuehrung, colour = "Strahlung nachgeführt")) +
+  geom_line(aes(y = strahlung_beste_kippung, colour = "Strahlung optimal gekippt")) +
+  geom_label(aes(x = solar_data_karfreitag$MESS_DATUM[65], y = 35, label = paste("Winkel: Azim. ", round(optimised_angles$par[1], digits = 2), " Elev. ", round(optimised_angles$par[2], digits = 2)))) +
+  #scale_colour_manual(values = c("blue", "red")) +
+  labs(
+    y = "Strahlung in J/cm^2",
+    x = "Uhrzeit",
+    colour = "Strahlungsart"
+    ) +
+  theme(legend.position = "bottom")
 ```
