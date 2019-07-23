@@ -41,3 +41,27 @@ berechne_normalenvektor_panel <- function(drehwinkel=0,
                                length = 1))
   }
 }
+
+
+berechne_relative_einstrahlflaeche <- function(einstrahlvektor_sonne, normalenvektor_panel, nachfuehrung = FALSE){
+  # INPUT: - Einstrahlvektor der Sonne, 
+  #           def. vom Nullpunkt ZUR Sonne,
+  #           auch als Liste dieser Vektoren
+  #        - Normanlenvektor des Panels,
+  #           als einfacher Vektoraus kart. Koord.
+  # OUTPUT: Die Einstrahlflaeche relativ zu einem liegenden Panel 
+  #          als Vektor der gleichen Laenge wie einstrahlvektor 
+  
+  vektor_liegendes_panel <- berechne_normalenvektor_panel()
+  
+  # Erklaerung Skalarprodukt:
+  # 
+  skalare_referenz <- mapply(skalarprodukt, einstrahlvektor_sonne, list(vektor_liegendes_panel))
+  
+  if(!nachfuehrung){
+    skalare_panel <- (mapply(skalarprodukt, einstrahlvektor_sonne, list(normalenvektor_panel)))
+    return(skalare_panel/skalare_referenz)
+  } else {
+    return(1/skalare_referenz) # perfekte Nachfuehrung hat stets Skalarprodukt von "1"
+  }
+}
