@@ -12,19 +12,23 @@ rad_zu_grad <- function(x){
 
 polar_zu_kartesisch <- function(azimuth, elevation, length=1){
   # INPUT:  3D-Polarkoordinaten, in Radiant
-  # OUTPUT: Kartesische Koordinaten, NED (als Liste)
+  # OUTPUT: Liste kartesischer Koordinaten, (NED-System)
+  #           n --> "Norden", also azimuth = 0, elevation = 90
+  #           e --> "Osten", also azimuth = 90, elevation = 90
+  #           d --> "Unten", also azimuth egal und elevation = 0
   
-  # Funktionsweise NED-System:
-  # x zeigt nach Norden, also azimuth = 0, elevation = 90
-  # y zeigt nach Osten, also azimuth = 90, elevation = 90
-  # z zeigt nach "Unten", also azimuth egal und elevation = 0
+  n <- length * cos(azimuth) * sin(elevation)
+  e <- length * sin(azimuth) * sin(elevation)
+  d <- length *                cos(elevation)
   
-  x <- length * cos(azimuth) * sin(elevation)
-  y <- length * sin(azimuth) * sin(elevation)
-  z <- length *                cos(elevation)
+  vektor <- c(n, e, d)
+  names(vektor) <- c("north", "east", "down")
   
-  list(x, y, z)
+  return(vektor)
 }
+
+
+vectorised_polar_zu_kartesisch <- Vectorize(polar_zu_kartesisch, SIMPLIFY = FALSE)
 
 
 skalarprodukt <- function(vector_a, vector_b){
