@@ -43,19 +43,28 @@ berechne_normalenvektor_panel <- function(drehwinkel=0,
 }
 
 
-berechne_relative_einstrahlflaeche <- function(einstrahlvektor_sonne, normalenvektor_panel, nachfuehrung = FALSE){
+berechne_relative_einstrahlflaeche <- function(einstrahlvektor_sonne,
+                                               normalenvektor_panel,
+                                               nachfuehrung = FALSE){
   # INPUT: - Einstrahlvektor der Sonne, 
-  #           def. vom Nullpunkt ZUR Sonne,
+  #           def. vom Nullpunkt ZUR Sonne, Laenge 1
   #           auch als Liste dieser Vektoren
   #        - Normanlenvektor des Panels,
-  #           als einfacher Vektoraus kart. Koord.
+  #           als einfacher Vektor aus kart. Koord., Laenge 1
+  #        - Nachfuehrung: gibt rel. Einstrahlflaeche fuer 
+  #           perfekte Nachfuehrung an, normalenvektor_panel
+  #           dann irrelevant
   # OUTPUT: Die Einstrahlflaeche relativ zu einem liegenden Panel 
-  #          als Vektor der gleichen Laenge wie einstrahlvektor 
+  #          als Vektor der gleichen Laenge wie einstrahlvektor_sonne
   
   vektor_liegendes_panel <- berechne_normalenvektor_panel()
   
-  # Erklaerung Skalarprodukt:
-  # 
+  # Das Skalarprodukt in kartesischen Raum:
+  # da beide Vektoren die Laenge 1 besitzen (wird hier nicht geprüft!),
+  # ergibt das Skalarprodukt den Cosinus des Winkels, 
+  # den die beiden Vektoren aufspannen.
+  # Dieser Wert ist verhält sich identisch wie der Anteil an
+  # "aufgefangener" Sonnenstrahlung.
   skalare_referenz <- mapply(skalarprodukt, einstrahlvektor_sonne, list(vektor_liegendes_panel))
   
   if(!nachfuehrung){
