@@ -20,6 +20,7 @@ source('../load_libraries.R')
 source('../funktionen_helper_winkel.R')
 source('../funktionen_winkel_solarpanel.R')
 source('../berechne_gesamte_strahlungsenergie.R')
+source('../funktionen_winkel_optimierung.R')
 ```
 
 
@@ -31,7 +32,7 @@ source('../berechne_gesamte_strahlungsenergie.R')
 | 1.1      | Folgeänderungen von Winkelfunktionen            | 20.07.19  |
 | 1.2      | Umstellung der benutzten Funktionen | 23.07.19 |
 | 2.0      | Erweiterung durch Vergleich von Winkeln und Optimierung | 23.07.19 |
-
+| 2.1      | Umstellung der benutzten Funktionen | 24.07.19 |
 
 
 # Beispiel mit 4 Winkel
@@ -136,21 +137,18 @@ grid %>%
 
 # Analytische Optimierung des Dreh- und Kippwinkels
 
-```{r Summierung}
-helper_optim <- function(x){
-  helper_summe(x[1], x[2])
-}
-
-optimised_angles <- optim(c(0,30), helper_optim, control = list(fnscale = -1))
+```{r Optimierung}
+optimale_winkel <- berechne_optimale_panelwinkel(solar_data_karfreitag$kartesisch, 
+                                         solar_data_karfreitag$direkte_strahlung)
 
 solar_data_karfreitag <- solar_data_karfreitag %>%
-  mutate('strahlung_beste_kippung' = direkte_strahlung*berechne_relative_einstrahlflaeche(kartesisch, berechne_normalenvektor_panel(drehwinkel = optimised_angles$par[1], kippwinkel = optimised_angles$par[2], radiant = FALSE)))
+  mutate('strahlung_beste_kippung' = direkte_strahlung*berechne_relative_einstrahlflaeche(kartesisch, berechne_normalenvektor_panel(drehwinkel = optimale_winkel[1], kippwinkel = optimale_winkel[2], radiant = FALSE)))
 
 ggplot(solar_data_karfreitag, aes(x = MESS_DATUM)) +
   geom_line(aes(y = direkte_strahlung, colour = "Strahlung Flach")) +
   geom_line(aes(y = strahlung_perfekte_nachfuehrung, colour = "Strahlung nachgeführt")) +
   geom_line(aes(y = strahlung_beste_kippung, colour = "Strahlung optimal gekippt")) +
-  geom_label(aes(x = solar_data_karfreitag$MESS_DATUM[65], y = 35, label = paste("Winkel: Azim. ", round(optimised_angles$par[1], digits = 2), " Elev. ", round(optimised_angles$par[2], digits = 2)))) +
+  geom_label(aes(x = solar_data_karfreitag$MESS_DATUM[65], y = 35, label = paste("Winkel: Azim. ", round(optimale_winkel[1], digits = 2), " Elev. ", round(optimale_winkel[2], digits = 2)))) +
   #scale_colour_manual(values = c("blue", "red")) +
   labs(
     y = "Strahlung in J/cm^2",
