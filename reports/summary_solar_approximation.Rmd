@@ -1,0 +1,157 @@
+---
+title: "Approximation von Sonnenwinkeln und Strahlungsdaten"
+author: "Hendrik Obelöer"
+date: "28 July 2019"
+output: html_document
+subtitle: Bachelorprojekt Gruber, Jürgens, Obelöer
+---
+
+Das Ziel ist es, die vorher fest eingelesenen Strahlungswerte und Sonnenstandswinkel durch Formeln zu ersetzen und anzunähern. Die Genauigkeit dieser Modelle soll in diesem Dokument dargestellt werden.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load libraries and functions, include=FALSE}
+source('../load_libraries.R')
+library(scales)
+
+source('../funktionen_helper_winkel.R')
+source('../berechne_sonnenposition.R')
+source('../berechne_sonneneinstrahlung.R')
+```
+
+
+# Veränderungen
+
+| Version  | Kommentar                | Datum     |
+|----------|--------------------------|-----------|
+| 1.0      | erste Version            | 24.07.19  |
+
+
+```{r Sonnenstrahlungsdaten einlesen, include=FALSE}
+solar_data <- read_delim('../data/solardaten_messstation-01975_20171026-20190428.txt', delim = ";") %>%
+  rename("qualitaet" = '  QN',
+         "diffuse_strahlung" = "DS_10",
+         "globale_strahlung" = "GS_10",
+         "sonnenscheindauer" = "SD_10",
+         "atmosphaerische_gegenstrahlung" = "LS_10") %>%
+  mutate_if(is.character, str_trim) %>%
+  mutate_if(is.character, as.numeric) %>%
+  mutate_at("MESS_DATUM", ymd_hm) %>%
+  mutate_at("MESS_DATUM", force_tz, tzone = "UTC") %>%
+  mutate("direkte_strahlung" = globale_strahlung - diffuse_strahlung)
+```
+
+```{r Sonnenwinkeldaten einlesen, include=FALSE}
+solar_winkel <- read_csv('../data/sonnenwinkel_20190419.csv', skip = 3) %>%
+  rename("uhrzeit" = "Stunde") %>%
+  mutate('datetime' = make_datetime(year = 2019L, month = 4L, day = 19L, hour = hour(uhrzeit), min = minute(uhrzeit))) %>%
+  mutate_at("datetime", force_tz, tzone = "Europe/Berlin") %>%
+  mutate('azimuth_rad' = grad_zu_rad(Azimuth)) %>%
+  mutate_at('Elevation', function(x) x + 90) %>%  # Elevation Daten gehen vom Nullpunkt in der Horizontalen aus
+                                                  # nicht in Richtung "unten",90° Addition behebt das
+  mutate('elevation_rad' = grad_zu_rad(Elevation)) %>%
+  mutate('kartesisch' = (vectorised_polar_zu_kartesisch(azimuth = azimuth_rad, elevation = elevation_rad))) #%>%
+```
+
+```{r Daten zu Karfreitag zusammenführen}
+solar_data_karfreitag <- solar_data %>%
+  inner_join(solar_winkel, by = c("MESS_DATUM" = "datetime"))
+```
+
+```{r Simulationsdaten berechnen}
+
+messstation_position <- c(53.6332, 9.9881)
+
+sim_data <- tibble(
+  zeitpunkt = solar_data_karfreitag$MESS_DATUM
+  ) %>%
+  mutate(einstrahlung_sim = 6/100 * vectorised_berechne_sonnenstrahlung(zeitpunkt, messstation_position[1], messstation_position[2])) %>% # mit Umrechnung W/m^2 auf J/cm^2 pro 10 Min
+  mutate(sonnenwinkel = (vectorised_berechne_sonnenposition(zeitpunkt, messstation_position[1], messstation_position[2]))) %>%
+  mutate(sonnenwinkel_azimuth   = rad_zu_grad(get_azimuth(sonnenwinkel))) %>%
+  mutate(sonnenwinkel_elevation = rad_zu_grad(get_elevation(sonnenwinkel)))
+```
+
+Als Grundlage für die erste visualisierung dient der Karftreitag 2019. Dies war ein besonders wolkenloser Tag und war bereits in vorherigen Visualisierungen die Grundlage.
+
+# Vergleich der Winkel
+
+```{r Winkeldaten visualisieren}
+ggplot(solar_data_karfreitag, aes(x = Azimuth, y = Elevation)) +
+  geom_line(aes(colour = "Messdaten"), alpha = 0.8) +
+  geom_point(data = sim_data, aes(x = sonnenwinkel_azimuth, y = sonnenwinkel_elevation, colour = "Simulationsdaten"), alpha = 0.5, size = 0.5) +
+  labs(
+    title = "Vergleich Messdaten/Simulation",
+    x = "Breitenwinkel",
+    y = "Höhenwinkel",
+    colour = "Datenherkunft"
+  ) +
+  scale_x_continuous(limits = c(0,360), breaks = c(0,90,180,270,360)) +
+  theme(legend.position = "bottom")
+
+ggplot() +
+  geom_violin(aes(x="Azimuth", y=abs(sim_data$sonnenwinkel_azimuth - solar_data_karfreitag$Azimuth))) +
+  geom_violin(aes(x="Elevation", y=abs(sim_data$sonnenwinkel_elevation - solar_data_karfreitag$Elevation))) +
+  labs(
+    title = "Verteilung der Differenz von Azimuth- und Höhenwinkel",
+    y = "Abweichung eigene Simulation von Daten (Grad)",
+    x = NULL
+  )
+
+```
+
+Die Winkel scheinen sich nahezu perfekt zu überlappen, dies bestätigt vorherige Stichproben. Abweichugen von bis zu 0,02 Grad pro Achse sollten keine maßgeblichen Einflüsse auf den nachher zu berechnenden Feststellwinkel haben.
+
+
+# Vergleich der Strahlungsenergie
+
+Als Einsieg wird wieder der Karfreitag ausgewählt, um die Simulation mit bekannten Daten zu vergleichen.
+
+```{r Strahlungsdaten visualisieren}
+ggplot(solar_data_karfreitag, aes(x = with_tz(MESS_DATUM, "Europe/Berlin"))) +
+  geom_line(aes(y = direkte_strahlung, colour = "Messdaten")) + 
+  geom_line(data = sim_data, aes(x = with_tz(zeitpunkt, "Europe/Berlin"), y = einstrahlung_sim, colour = "Simulation")) +
+  labs(
+    title = "Vergleich Messdaten/Simulation",
+    y = "Strahlung in J/(cm^2 * 10min)",
+    x = "Uhrzeit",
+    colour = "Datenherkunft"
+  ) +
+  theme(legend.position = "bottom")
+```
+
+Die Form der simulierten Daten stimmen mit den tatsächlichen Messdaten überein. Es gibt eine Abweichung von wenigen Prozent.
+
+Um auch zu vergleichen, wie das Modell mit Sommer/Winterwechsel umgeht wird der Vergleich für alle Monatsbeginne im Jahr 2018 wiederholt:
+
+```{r Analyse Strahlung}
+ausgewaehlte_tage <- ymd(paste("2018", as.character(c(1:12)), "01", sep = "-"))
+
+solar_data_analyse <- solar_data %>%
+  select(c("MESS_DATUM", "direkte_strahlung")) %>%
+  filter(date(MESS_DATUM) %in%  ausgewaehlte_tage) %>%
+  mutate(direkte_strahlung_sim = 6/100 * vectorised_berechne_sonnenstrahlung(MESS_DATUM, messstation_position[1], messstation_position[2])) %>% # mit Umrechnung W/m^2 auf J/cm^2 pro 10 Min
+  gather(key = "datenart", value = "strahlungsstaerke", -MESS_DATUM) %>%
+  mutate(datenart = factor(datenart, levels = c("direkte_strahlung", "direkte_strahlung_sim"), 
+                                     labels = c("gemessen", "simuliert")))
+
+solar_data_analyse %>%
+  filter(hour(with_tz(MESS_DATUM, "Europe/Berlin")) > 3 & hour(with_tz(MESS_DATUM, "Europe/Berlin")) < 22) %>% # für Graphen Uhrzeit sinnvoll einschränken
+  ggplot(aes(x = with_tz(MESS_DATUM, "Europe/Berlin"))) +
+  geom_line(aes(y = strahlungsstaerke, colour = datenart)) + 
+  labs(
+    title = "Vergleich von Messung und Simulation der Direktstrahlung",
+    y = "Strahlung in J/(cm^2*10min)",
+    x = "Uhrzeit",
+    colour = "Datenherkunft",
+    caption = "Zeitwechsel in Achsen durch Zeitumstellung") +
+  facet_wrap( ~ date(MESS_DATUM), scales = "free_x") +
+  scale_x_datetime(timezone = "Europe/Berlin", labels = time_format("%H:%M")) +
+  theme(legend.position = "bottom")
+
+```
+
+Bei den Messdaten ist zu beachten, dass Umwelteinflüsse natürlich die Werte in vielen Fällen stark vom idealen Modell abweichen lassen.
+
+Dennoch scheint auch hier das Modell eine gute Grundlage für die weitere Rechnung zu liefern. Der absolute Wert des Modells ist dabei weniger wichtig als die Form der Kurve bzw. das Verhältnis der produzierten Daten zueinander. Dies scheint sehr gut die tatsächlichen Verhältnisse wiederzuspiegeln. 
