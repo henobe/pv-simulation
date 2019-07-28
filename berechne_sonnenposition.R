@@ -20,7 +20,7 @@ berechne_sonnenposition <- function(when = Sys.time(), lat = 53.57840, long = 9.
   #        lat: Breitengrad des Ortes
   #        long: Laengengrad des Ortes
   # OUTPUT: Position der Sonne im NED-System 
-  #          Kugelkoordinaten, Vektor len=2
+  #          Kugelkoordinaten radiant, Vektor len=2
   
   if(is.character(when)) when <- strptime(when, format)
   when <- lubridate::with_tz(when, "UTC")
@@ -49,12 +49,29 @@ berechne_sonnenposition <- function(when = Sys.time(), lat = 53.57840, long = 9.
   
   # Azimuth and elevation
   el <- calculate_elevation(lat, dec, ha)
-  azJ <- calculate_azimuth(lat, dec, ha, el)
+  az <- calculate_azimuth(lat, dec, ha, el)
 
-  position <- c(azJ, el + pi/2) # Anpassung an NED-System
+  position <- c(az, el + pi/2) # Anpassung an NED-System
   names(position) <- c("azimuth", "elevation")
   
   return(position)
+}
+
+
+# Hilfsfunktionen fuer den Umgang mit Input und Output----------
+
+vectorised_berechne_sonnenposition <- Vectorize(berechne_sonnenposition, SIMPLIFY = FALSE)
+
+get_azimuth <- function(x){
+  sapply(x, `[[`, 1)
+}
+
+get_elevation <- function(x){
+  sapply(x, `[[`, 2)
+}
+
+get_zenitwinkel <- function(x){
+  pi - sapply(x, `[[`, 1)
 }
 
 
