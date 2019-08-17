@@ -36,6 +36,7 @@ source('../funktionen_winkel_optimierung.R')
 
 
 # Beispiel mit 4 Winkel
+# Beispiel mit 4 Winkel
 
 Es werden die Bestrahlungsdaten für einen festen Kippwinkel simuliert.
 
