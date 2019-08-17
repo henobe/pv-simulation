@@ -19,6 +19,7 @@ library(scales)
 source('../funktionen_helper_winkel.R')
 source('../berechne_sonnenposition.R')
 source('../berechne_sonneneinstrahlung.R')
+source('../generiere_zeitreihe.R')
 ```
 
 
@@ -73,7 +74,25 @@ sim_data <- tibble(
   mutate(sonnenwinkel_elevation = rad_zu_grad(get_elevation(sonnenwinkel)))
 ```
 
-Als Grundlage für die erste visualisierung dient der Karftreitag 2019. Dies war ein besonders wolkenloser Tag und war bereits in vorherigen Visualisierungen die Grundlage.
+Der erste Test wird für die allgemeine Sonnenstrahlung ausgeführt. Diese sollte zwischen ~1320 (Juli) und ~1410 (Januar) liegen.
+
+```{r Schwankungen in Strahlungsdaten}
+
+start_date <- ymd("2019.01.01")
+end_date <- ymd("2019.12.31")
+
+
+df_test_theoretical_radiation <- tibble(
+  datetime = with_tz(as.POSIXct(generiere_zeitreihe(start_date, end_date, 720)), "UTC")) %>%
+  mutate(theoretical_radiation = calcualte_theoretical_radiation(datetime))
+
+ggplot(df_test_theoretical_radiation, aes(x = datetime, y = theoretical_radiation)) +
+  geom_point() +
+  geom_line()
+```
+
+
+Als Grundlage für die erste Visualisierung dient der Karftreitag 2019. Dies war ein besonders wolkenloser Tag und war bereits in vorherigen Visualisierungen die Grundlage.
 
 # Vergleich der Winkel
 
