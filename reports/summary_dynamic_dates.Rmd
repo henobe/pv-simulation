@@ -1,0 +1,114 @@
+---
+title: "Berechnungen mit frei einstellbarem Zeitintervall und Ort"
+author: "Hendrik Obelöer"
+date: "11 August 2019"
+output: html_document
+subtitle: Bachelorprojekt Gruber, Jürgens, Obelöer
+---
+
+Ziel ist es, die bisher entwickelten Funktionen nun über frei einstellbare Zeit- und Ort zu benutzen und automatisch sinnvolle Statistiken zu ermitteln. Ebenfalls soll der Abstand der einzelnen Zeitpunkte optimiert werden.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r load libraries and functions, include=FALSE}
+source('../load_libraries.R')
+#library(scales)
+
+source('../funktionen_helper_winkel.R')
+source('../berechne_sonnenposition.R')
+source('../berechne_sonneneinstrahlung.R')
+source('../berechne_gesamte_strahlungsenergie.R')
+source('../funktionen_winkel_optimierung.R')
+source('../funktionen_winkel_solarpanel.R')
+source('../funktionen_zeit_datum.R')
+
+```
+
+
+# Veränderungen
+
+| Version  | Kommentar                | Datum     |
+|----------|--------------------------|-----------|
+| 1.0      | erste Version            | 11.08.19  |
+
+
+```{r generate solar data}
+position_vec <- c(53.6332, 9.9881)
+
+start_date <- ymd("2019.08.09")
+end_date <- ymd("2019.08.10")
+# force_tz?
+
+solar_data <- tibble(
+  datetime = force_tz(as.POSIXct(generate_time_sequence(start_date, end_date, 1)), "Europe/Berlin"),  # Wie Zeitzonen behandeln?
+  position = list(position_vec)) %>%
+  mutate(sonnen_winkel = vectorised_berechne_sonnenposition(datetime, 
+                                                            sapply(position, `[[`, 1),
+                                                            sapply(position, `[[`, 2))) %>%
+  mutate(zenith_angle = unname(pi - get_elevation(sonnen_winkel))) %>%
+  mutate(winkel_kartesisch = vectorised_polar_zu_kartesisch(azimuth = sapply(sonnen_winkel, `[[`, 1), 
+                                                            elevation = sapply(sonnen_winkel, `[[`, 2))) %>%
+  mutate(sonnen_strahlung = vectorised_berechne_sonnenstrahlung(datetime,
+                                                                sapply(position, `[[`, 1),
+                                                                sapply(position, `[[`, 2),
+                                                                zenith_angle = zenith_angle))
+```
+
+```{r Visualise solar data}
+ggplot(solar_data, aes(x = datetime, y = sonnen_strahlung)) +
+  geom_line() +
+  labs(
+    title = "Visualisierung Einstrahlungsdaten Simulation",
+    y = "Strahlung in W/m^2",
+    x = "Uhrzeit")
+```
+
+```{r Optimalwinkel berechnen}
+#optimale_winkel <- berechne_optimale_panelwinkel(solar_data$winkel_kartesisch, solar_data$sonnen_strahlung)  
+#rueckgabe <- berechne_optimale_panelwinkel_gesamt(ymd("2019.08.09"), ymd("2019.08.10"), c(53.6332, 9.9881), 10)
+#winkel <- rueckgabe$winkel
+#soldata <- rueckgabe$data
+
+diff <- 1
+timestep <- round(120/0.9)
+wert1 <- 0
+while(abs(diff) > 0.01){
+  wert2 <- wert1
+  timestep <- as.integer(round(0.9*timestep))
+  wert1 <- berechne_optimale_panelwinkel_gesamt(ymd("2019.08.09"), ymd("2019.08.10"), c(53.6332, 9.9881), timestep)$winkel[2]
+  
+  diff <- wert1 - wert2
+  print(paste(timestep, diff, wert1))
+}
+
+print("done")
+
+```
+
+```{r Steigerung ermitteln}
+optimisation_result <- berechne_optimale_panelwinkel_gesamt(ymd("2019.08.08"), ymd("2019.08.10"), c(53.6332, 9.9881), timestep)
+
+optim_angles <- optimisation_result$winkel
+sim_data <- optimisation_result$data
+gain <- optimisation_result$relative_gain
+
+
+print(paste("Die optimalen Winkel sind: Höhenwinkel ", 
+            round(optim_angles[2], digits = 1), "°, Azimuth ", 
+            round(optim_angles[1], digits = 1), "°."))
+print(paste("Die Effizienzsteigerung beträgt: ", round(gain, digits = 1), "%"))
+```
+
+```{r Steigerung visualisieren}
+ggplot(sim_data, aes(x = datetime)) +
+  geom_line(aes(y = sonnen_strahlung, colour = "Flach")) +
+  geom_line(aes(y = eingefangene_strahlung, colour = "Optimal Ausgerichtet")) +
+  labs(
+    x = "Zeitpunkt (UTC)",
+    y = "Strahlungsstärke [W/m^2]",
+    colour = "Ausrichtung des Panels"
+  ) +
+  theme(legend.position = "bottom")
+```
