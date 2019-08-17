@@ -16,6 +16,9 @@ berechne_direkte_sonnenstrahlung <- function(when = Sys.time(),
   # Output: Direktstrahlung auf liegende Flaeche
   #          Einheit: Watt/m^2
   
+  if(is.character(when)) when <- strptime(when, format)
+  when <- with_tz(when, "UTC")
+  
   if(missing(zenith_angle)){
     pos <- berechne_sonnenposition(when, lat, long)
     zenith_angle <- unname(pi - pos[2])
