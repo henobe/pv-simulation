@@ -1,8 +1,7 @@
 ToDo
 
-- Umstellung von Winkeln auf kartesische Vektoren
-- Einsetzen des Skalarproduktes diskutieren
-- Normierung der Fläche klären. Was entspricht "1"
-- Berechnung der Fläche Neu
-- Neuer Durchgang mit summary_solar_data
-- Funktion um von kartesich auf Polarkoordinaten zurück zu rechnen
+- Zeitzonen korrekt erkennen anhand Position (Berechnung über UTC)
+- Graph auf Zeitzone der Position einstellen
+- Karte mit Position anzeigen.
+- bessere graphische Darstellung bei längerer Zeitreihe
+
