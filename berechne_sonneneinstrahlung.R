@@ -42,7 +42,7 @@ vectorised_berechne_sonnenstrahlung <- Vectorize(berechne_direkte_sonnenstrahlun
 
 calcualte_theoretical_radiation <- function(when){
   #solar_constant = 1367 # W/m^2
-  1367 * (1 + 0.033*cos(350*yday(when)/365))
+  1367 * (1 + 0.033*cos(2*pi*yday(when)/365))
 }
 
 calculate_theoretical_radiation_on_tangent <- function(theoretical_radiation, zenith_angle){
@@ -62,7 +62,7 @@ calculate_transmittance <- function(season, zenith_angle){
   r_k <- c(1.02, 1.00)
   names(r_k) <- c("summer", "winter")
   
-  A <- 1 # unsure about concrete definition of "A"
+  A <- 2 # unsure about concrete definition of "A", optimised value for actual data Hamburg
   
   a_0 <- r_0[season] * (0.4237 - 0.00821 * (6.0 - A)^2)
   a_1 <- r_1[season] * (0.5055 + 0.00595 * (6.5 - A)^2)
