@@ -22,7 +22,7 @@ source('../berechne_sonneneinstrahlung.R')
 source('../berechne_gesamte_strahlungsenergie.R')
 source('../funktionen_winkel_optimierung.R')
 source('../funktionen_winkel_solarpanel.R')
-source('../funktionen_zeit_datum.R')
+source('../generiere_zeitreihe.R')
 
 ```
 
@@ -42,7 +42,7 @@ end_date <- ymd("2019.08.10")
 # force_tz?
 
 solar_data <- tibble(
-  datetime = force_tz(as.POSIXct(generate_time_sequence(start_date, end_date, 1)), "Europe/Berlin"),  # Wie Zeitzonen behandeln?
+  datetime = force_tz(as.POSIXct(generiere_zeitreihe(start_date, end_date, 1)), "Europe/Berlin"),  # Wie Zeitzonen behandeln?
   position = list(position_vec)) %>%
   mutate(sonnen_winkel = vectorised_berechne_sonnenposition(datetime, 
                                                             sapply(position, `[[`, 1),
@@ -97,7 +97,7 @@ gain <- optimisation_result$relative_gain
 
 print(paste("Die optimalen Winkel sind: Höhenwinkel ", 
             round(optim_angles[2], digits = 1), "°, Azimuth ", 
-            round(optim_angles[1], digits = 1), "°."))
+            round(optim_angles[1], digits = 1), "°."), sep = "")
 print(paste("Die Effizienzsteigerung beträgt: ", round(gain, digits = 1), "%"))
 ```
 
