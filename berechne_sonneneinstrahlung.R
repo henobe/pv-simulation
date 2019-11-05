@@ -8,7 +8,8 @@
 
 berechne_direkte_sonnenstrahlung <- function(when = Sys.time(), 
                                              lat = 53.57840, long = 9.94080,
-                                             zenith_angle){
+                                             zenith_angle,
+                                             seasonal_accuracy = TRUE){
   # Input: when: Zeitpunkt als POSIXct
   #        lat: Breitengrad des Ortes
   #        long: Laengengrad des Ortes
@@ -30,7 +31,7 @@ berechne_direkte_sonnenstrahlung <- function(when = Sys.time(),
 
   season <- get_season(when)
   
-  transmittance <- calculate_transmittance(season, zenith_angle)
+  transmittance <- calculate_transmittance(season, zenith_angle, seasonal_accuracy)
   
   pmax(transmittance * et_radiation_on_tangent, 0)
 }
@@ -50,9 +51,11 @@ calculate_theoretical_radiation_on_tangent <- function(theoretical_radiation, ze
   unname(theoretical_radiation * cos(zenith_angle))
 }
 
-calculate_transmittance <- function(season, zenith_angle){
+calculate_transmittance <- function(season, zenith_angle, seasonal_accuracy){
   # Beam Radiation on Ground Surface Clear day
   # Definining Constans
+  
+  if(seasonal_accuracy){
   r_0 <- c(0.97, 1.03)
   names(r_0) <- c("summer", "winter")
   
@@ -61,6 +64,16 @@ calculate_transmittance <- function(season, zenith_angle){
   
   r_k <- c(1.02, 1.00)
   names(r_k) <- c("summer", "winter")
+  } else {
+    r_0 <- c(1)
+    names(r_0) <- c(season)
+    
+    r_1 <- c(1)
+    names(r_1) <- c(season)
+    
+    r_k <- c(1.01)
+    names(r_k) <- c(season)
+  }
   
   A <- 2 # unsure about concrete definition of "A", optimised value for actual data Hamburg
   

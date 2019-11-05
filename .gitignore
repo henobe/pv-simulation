@@ -17,3 +17,9 @@ temp/
 
 # Reports from rMarkdown
 *.html
+
+# Created data
+*.Rda
+
+# rsconnect folder from web app
+rsconnect/

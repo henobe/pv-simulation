@@ -7,7 +7,7 @@ source('berechne_gesamte_strahlungsenergie.R')
 source('funktionen_winkel_optimierung.R')
 source('funktionen_winkel_solarpanel.R')
 source('generiere_zeitreihe.R')
-source('visualisiere_koordinaten.R')
+source('ergebnis_visualisierung.R')
 
 
 ui <- fluidPage( # Define UI
@@ -26,29 +26,30 @@ ui <- fluidPage( # Define UI
                            
                            sep = "bis"),
             
-            numericInput("lat", "Breitengrad: (Dezimalgrad)", 53.6332, min = -90, max = 90),
-            numericInput("long", "Längengrad: (Dezimalgrad)", 9.9881, min = -180, max = 180),
+            numericInput("lat", "Breitengrad: (-90° bis 90°)", 53.6332, min = -90, max = 90),
+            numericInput("long", "Längengrad: (-180° bis 180°)", 9.9881, min = -180, max = 180),
             
             h3("Info:"),
-            p("Die Berechnung vergleicht die Strahlung auf eine fest gewinkelte Fläche mit einer flach am Boden liegende. 
-              Die Simulation geht ausschließlich von optimalen Bedingungen aus (keine Wolken oder Schatten).
-              Die prozentuale Verbesserung ist dementsprechend eine Obergrenze."),
-            p("Bei der Positionseingabe wird die Zeitzone automatisch erkannt, 
-              so dass die ausgewählten Tage stets von 0 Uhr bis 0 Uhr simuliert werden."),
-            strong("Die Berechnung ist nur eine Annäherung und basiert auf der Simulation von 10-minütigen Werten. 
-              Diese Auflösung reicht um die optimalen Winkel im hunderstel Bereich zu errechnen.
-              Die Berechnung langer Zeiträume kann allerdings mehrere Minuten dauern!"),
+            p("Welches ist der optimale Kippwinkel eines Solarpanels? Diese Webseite stellt ein Tool zur Verfügung, um, 
+               abhängig von Zeitraum und Position, diese Frage zu beantworten.
+               Die Berechnung vergleicht die Strahlung auf eine fest gewinkelte Fläche mit einer flach am Boden liegenden. 
+               Die Simulation geht ausschließlich von optimalen Bedingungen aus (keine Wolken oder Schatten).
+               Die prozentuale Verbesserung ist dementsprechend eine Obergrenze."),
+               strong("Die Berechnung ist nur eine Annäherung und basiert auf einer Simulation.
+                    Es können außerdem Abweichungen von bis zu 0.5° im optimalen Kippwinkel durch Rundungen auftreten.
+                    Je kleiner der ausgewählte Zeitraum ist, desto genauer ist die Simulation."),
             br(),
-            p("Die Sprünge der Sonneneinstrahlung im Fühling und Herbst ergeben 
-              sich durch eine Anpassung der Parameter für Sommer und Winter. 
-              Der genutzte Berechnungsalgorithmus hat eine höhere Genauigkeit für die nördliche Halbkugel.")
+            p(),
+            p("Bei der Positionseingabe wird die Zeitzone automatisch erkannt, 
+               so dass die ausgewählten Tage stets von 0 Uhr bis 0 Uhr simuliert werden."),
+            p("Der genutzte Berechnungsalgorithmus ist für die nördliche Halbkugel ausgelegt und kann
+               unzuverlässige Daten für sehr südliche Regionen liefern.")
         ),
         
         mainPanel(
             # Output: Verbatim text for data summary ----
             h2("Kennzahlen"),
-            textOutput("angles"),
-            textOutput("relative_gain"),
+            plotOutput("angles", height = "320px"),
             h2("Visualisierung"),
             plotOutput("distPlot"),
             h2("Kartenansicht"),
@@ -60,22 +61,27 @@ ui <- fluidPage( # Define UI
 
 server <- function(input, output) { # Define server logic
     
+    intervall_length <- reactive(get_optimised_intervall_length(input$daterange[1], input$daterange[2]))
+    
     optimisation_result <- reactive({berechne_optimale_panelwinkel_gesamt(input$daterange[1],
                                                                           input$daterange[2],
-                                                                          c(input$lat, input$long))
+                                                                          c(input$lat, input$long),
+                                                                          #30)
+                                                                          intervall_length())
     })
     
     optim_angles <- reactive({optimisation_result()$winkel})
     sim_data <- reactive({optimisation_result()$data})
     gain <- reactive({optimisation_result()$relative_gain})
     
+    
+    
     output$distPlot <- renderPlot({
-        # generate bins based on input$bins from ui.R
         plot <- ggplot(sim_data(), aes(x = datetime)) +
-            geom_line(aes(y = sonnen_strahlung, colour = "Flach")) +
-            geom_line(aes(y = eingefangene_strahlung, colour = "Optimal Ausgerichtet")) +
+            geom_line(aes(y = eingefangene_strahlung, colour = "optimal ausgerichtet")) +
+            geom_line(aes(y = sonnen_strahlung, colour = "flach")) +
             labs(
-                x = "Zeitpunkt UTC",
+                x = "Zeitpunkt",
                 y = "Strahlungsstärke [W/m^2]",
                 colour = "Ausrichtung des Panels"
             ) +
@@ -84,17 +90,13 @@ server <- function(input, output) { # Define server logic
         print(plot)
     })
     
-    output$angles <- renderText({
-        paste(c("Optimale Azimuth- und Höhenwinkel:", round(optim_angles(), digits = 1)))
+    output$angles <- renderPlot({
+        print(visualisiere_kippung_steigerung(optim_angles()[2], gain()))
     })
-    
-    output$relative_gain <- renderText({
-        paste(round(gain(), digits = 2), "% Verbesserung gegenüber flach liegend", sep = "")
-    })
-    
+
     output$map <- renderPlot({
         # generate bins based on input$bins from ui.R
-        plot <- visualisere_koordinaten(latitude = input$lat,
+        plot <- visualisiere_koordinaten(latitude = input$lat,
                                         longitude = input$long)
         plot <- plot + theme(text = element_text(size=20))
         print(plot)

@@ -77,7 +77,7 @@ wert1 <- 0
 while(abs(diff) > 0.01){
   wert2 <- wert1
   timestep <- as.integer(round(0.9*timestep))
-  wert1 <- berechne_optimale_panelwinkel_gesamt(ymd("2019.08.09"), ymd("2019.08.10"), c(53.6332, 9.9881), timestep)$winkel[2]
+  wert1 <- berechne_optimale_panelwinkel_gesamt(ymd("2019.08.09"), ymd("2019.10.20"), c(53.6332, 9.9881), timestep)$winkel[2]
   
   diff <- wert1 - wert2
   print(paste(timestep, diff, wert1))
@@ -87,8 +87,68 @@ print("done")
 
 ```
 
+```{r calculate time delta precision}
+tage_vec <- c(1, 5, 10, 20, seq(30, 365, by = 30))
+zeitabstaende <- c(1, 5, 10, 20, 30, 40, 50, 60, 90, 120, 180, 240)
+position <- c(53.6332, 9.9881)
+start_date <- ymd("2019.07.01")
+
+sim_data <- expand.grid(
+  days = tage_vec,
+  time_delta = zeitabstaende
+  ) %>%
+  mutate(optimised_panel_angle = mapply(berechne_optimale_panelwinkel_gesamt,
+                                        end_date = start_date +  days(days),
+                                        intervall_length = time_delta,
+                                        MoreArgs = list(start_date = start_date,
+                                                        position = position,
+                                                        simplify_return = TRUE),
+                                        SIMPLIFY = TRUE))
+
+
+
+efficiency_comparison <- sim_data %>%
+  filter(time_delta == 1) %>%
+  rename(benchmark = "optimised_panel_angle") %>%
+  right_join(sim_data) %>%
+  arrange(days) %>%
+  fill(benchmark, .direction = "down") %>%
+  mutate(diff_to_benchmark = abs(optimised_panel_angle - benchmark)) %>%
+  mutate_at("time_delta", factor)
+
+save(sim_data,file="sim_data.Rda")
+save(efficiency_comparison,file="effciency_comparison.Rda")
+
+save_sim_data <- sim_data
+save_efficiency_comparison <- efficiency_comparison
+#Then load it with:
+#load("data.Rda")
+sim_data <- c(1)
+
+load("sim_data.Rda")
+load("effciency_comparison.Rda")
+
+ggplot(efficiency_comparison, aes(x = days, y = diff_to_benchmark, colour = time_delta))+
+  geom_line()
+
+
+efficiency_comparison %>%
+  filter(time_delta != 1) %>%
+  mutate_at("time_delta", factor) %>%
+  mutate_at("days", factor) %>%
+  mutate(qual_diff = ifelse(diff_to_benchmark < 0.25, NA, diff_to_benchmark)) %>%
+  ggplot(aes(x = days, y = time_delta, fill = qual_diff))+
+  geom_raster() +
+  geom_text(aes(label = round(diff_to_benchmark, digits = 2))) +
+  scale_fill_distiller(na.value = "green") +
+  scale_x_discrete() +
+  scale_y_discrete()
+
+```
+
+
 ```{r Steigerung ermitteln}
-optimisation_result <- berechne_optimale_panelwinkel_gesamt(ymd("2019.08.08"), ymd("2019.08.10"), c(53.6332, 9.9881), timestep)
+optimisation_result <- berechne_optimale_panelwinkel_gesamt(ymd("2019.02.08"), ymd("2019.02.20"), c(53.6332, 9.9881), timestep)
 
 optim_angles <- optimisation_result$winkel
 sim_data <- optimisation_result$data

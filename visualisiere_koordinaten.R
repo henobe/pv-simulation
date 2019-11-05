@@ -1,9 +1,6 @@
 mapWorld <- borders("world", colour="grey", fill="gray50") # create a layer of borders
 
 visualisere_koordinaten <- function(latitude, longitude){
-  # INPUT: Zwei Geokoordinaten
-  # OUTPUT: GGPLOT-Object das auf der Weltkarte, die Koordinaten darstellt
-  
   mp <- ggplot() +  
     mapWorld +
     geom_point(aes(x=longitude, y=latitude) ,color="red", size=3) +

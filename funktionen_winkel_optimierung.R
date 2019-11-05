@@ -1,48 +1,70 @@
 # Funktionen zur Berechnung der optimalen Dreh- und Kippwinkel
 
-berechne_strahlungsenergie_bei_panelwinkel <- function(x, sw, irr) {
+berechne_strahlungsenergie_bei_panelwinkel <- function(elevation, azimuth = 0, sw, irr) {
   # INPUT: - x, Angles: Vektor mit Azimuth und Elevationwinkel in Grad
   #        - sw, Sonnenwinkel: Liste der Sonnenwinkel in kart. Koord
   #        - irr, Irridation: Vektor mit passenden Strahlungswerten
   # OUTPUT: Gesamte Strahlungsenergie (Skalar),
   #          die bei dieser Konfiguration aufgefangen worden wäre
   
-  relative_flaeche <- berechne_relative_einstrahlflaeche(sw,
-                                                         berechne_normalenvektor_panel(
-                                                           drehwinkel = x[1],
-                                                           kippwinkel = x[2],
-                                                           radiant = FALSE
-                                                         ))
-  
+    relative_flaeche <- berechne_relative_einstrahlflaeche(sw,
+                                                           berechne_normalenvektor_panel(
+                                                             drehwinkel = 0,
+                                                             kippwinkel = elevation,
+                                                             radiant = FALSE
+                                                           ))
+
   berechne_gesamte_strahlungsenergie(irr, relative_flaeche)
 }
 
 
 berechne_optimale_panelwinkel <- function(sonnenwinkel,
-                                          strahlungsenergie_pro_flaeche,
-                                          startwinkel = c(0,30)){
+                                          strahlungsenergie_pro_flaeche){
   # INPUT: - Sonnenwinkel: Liste der Sonnenwinkel in kart. Koord
   #        - Strahlungsenergie: Vektor mit passenden Strahlungswerten
   #        - Startwinkel: Start für den Optimierungsalgorithmus
   # OUTPUT: Optimaler Azimuth und Elevation Winkel
   #          Vektor, mit diesen beiden Elementen
   
-  result <- optim(startwinkel,
-                  berechne_strahlungsenergie_bei_panelwinkel,
-                  sw = sonnenwinkel,
-                  irr = strahlungsenergie_pro_flaeche,
-                  control = list(fnscale = -1)) # für Maximierung
+  result <- optimise(berechne_strahlungsenergie_bei_panelwinkel,
+                     interval = c(-90,90),
+                     tol = 0.01,
+                     maximum = TRUE,
+                     sw = sonnenwinkel,
+                     irr = strahlungsenergie_pro_flaeche) # für Maximierung
   
-  drehwinkel <- result$par
+  drehwinkel <- c(0, result[[1]])
   names(drehwinkel) <- c("azimuth", "elevation")
   
   return(drehwinkel)
 }
 
 
-berechne_optimale_panelwinkel_gesamt <- function(start_date = now(), end_date = now() - days(1), 
+get_optimised_intervall_length <- function(start_date, end_date){
+  days_label <- c("below 20", "20-30", "30-60", "60-90",
+                  "90-120", "120-150", 
+                  "above 150")
+  days_number <- c(0, 20, 30, 60, 90, 120, 150, 9999)
+  
+   lookuptable <- tibble(
+    number_days = days_label,
+    intervall_length = c(10, 20, 30, 40, 50, 60, 90)  # minutes
+  ) %>% mutate_at("number_days", factor)
+  
+  
+  deltap <- cut(as.numeric(end_date - start_date), 
+                breaks = days_number, labels = days_label)
+
+  index <- match(deltap, lookuptable$number_days)
+  
+  return(lookuptable$intervall_length[index])
+}
+
+
+berechne_optimale_panelwinkel_gesamt <- function(start_date = now(), end_date = now() + days(1), 
                                                  position = c(53.6332, 9.9881), 
-                                                 intervall_length = 10){
+                                                 intervall_length = 10, 
+                                                 simplify_return = FALSE){
   # INPUT: start_date und end_date als POSIXct-Wert,
   #        postion als vector mit zwei Dezimalkoordinaten,
   #        intervall_length: Abstand zwischen zwei Messpunkten, in Minuten 
@@ -51,24 +73,34 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(), end_date = 
   #           data: ein Dataframe mit den wichtigsten Berechnungsdaten zur weiteren Verwendung
   #           relative_gain: eine Kennzahl der prozentualen Verbesserung mit gekipptem Panel zu liegendem.
   
+  time_zone <- tz_lookup_coords(position[1], position[2], method = "fast", warn = FALSE)
+  
   df <- tibble(
-    datetime = with_tz(as.POSIXct(generiere_zeitreihe(start_date, end_date, intervall_length)), "UTC"),
-    coordinates = list(position)) %>%
+      datetime = force_tz(as.POSIXct(generiere_zeitreihe(start_date, end_date, intervall_length)), time_zone),
+      coordinates = list(position)
+    ) %>%
+    filter(!is.na(datetime)) %>%  # filter missing data bei Zeitumstellung Winter auf Sommer
+    mutate_at("datetime", with_tz, "UTC") %>%
     mutate(sonnen_winkel = vectorised_berechne_sonnenposition(datetime, position[1], position[2])) %>%
     mutate(zenith_angle = unname(pi - get_elevation(sonnen_winkel))) %>%
     mutate(winkel_kartesisch = vectorised_polar_zu_kartesisch(azimuth   = sapply(sonnen_winkel, `[[`, 1), 
                                                               elevation = sapply(sonnen_winkel, `[[`, 2))) %>%
     mutate(sonnen_strahlung = vectorised_berechne_sonnenstrahlung(datetime, position[1], position[2],
-                                                                  zenith_angle = zenith_angle))
+                                                                  zenith_angle = zenith_angle,
+                                                                  seasonal_accuracy = FALSE))
   
   optimale_winkel <- berechne_optimale_panelwinkel(df$winkel_kartesisch, df$sonnen_strahlung)  
   
-  df <- df %>% mutate(eingefangene_strahlung = 
-                        sonnen_strahlung * berechne_relative_einstrahlflaeche(
-                          winkel_kartesisch, 
-                          berechne_normalenvektor_panel(drehwinkel = optimale_winkel[1], 
-                                                        kippwinkel = optimale_winkel[2],
-                                                        radiant = FALSE)))
+  if(simplify_return) return(optimale_winkel["elevation"])
+  
+  df <- df %>% 
+    mutate(eingefangene_strahlung = 
+             sonnen_strahlung * berechne_relative_einstrahlflaeche(
+               winkel_kartesisch, 
+               berechne_normalenvektor_panel(drehwinkel = optimale_winkel[1], 
+                                             kippwinkel = optimale_winkel[2],
+                                             radiant = FALSE))) %>%
+    mutate_at("datetime", with_tz, time_zone)
   
   df$eingefangene_strahlung[df$eingefangene_strahlung < 0] <- 0  # negative values are not useful
   
