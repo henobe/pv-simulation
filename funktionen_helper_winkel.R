@@ -1,16 +1,16 @@
 # Hilfsfunktionen für die Rechnung mit Winkeln und Vektoren
 
-grad_zu_rad <- function(value){
-  value*pi/180
+grad_zu_rad <- function(value) {
+  value * pi / 180
 }
 
 
-rad_zu_grad <- function(x){
-  x*180/pi
+rad_zu_grad <- function(x) {
+  x * 180 / pi
 }
 
 
-polar_zu_kartesisch <- function(azimuth, elevation, length=1){
+polar_zu_kartesisch <- function(azimuth, elevation, length = 1) {
   # INPUT:  3D-Polarkoordinaten, in Radiant
   # OUTPUT: Liste kartesischer Koordinaten, (NED-System)
   #           n --> "Norden", also azimuth = 0, elevation = 90
@@ -31,7 +31,7 @@ polar_zu_kartesisch <- function(azimuth, elevation, length=1){
 vectorised_polar_zu_kartesisch <- Vectorize(polar_zu_kartesisch, SIMPLIFY = FALSE)
 
 
-skalarprodukt <- function(vector_a, vector_b){
+skalarprodukt <- function(vector_a, vector_b) {
   # Input: Zwei Vektoren/Listen, bestehend aus 3 Elementen
   # Output: Skalarprodukt als Vektor (len=1)
   

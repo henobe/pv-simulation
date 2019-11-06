@@ -1,8 +1,8 @@
 # Verschiedene Funktionen zu Winkelrechnungen des Solarpanels
 
-berechne_normalenvektor_panel <- function(drehwinkel=0, 
-                                          kippwinkel=0, 
-                                          radiant = TRUE){
+berechne_normalenvektor_panel <- function(drehwinkel = 0, 
+                                          kippwinkel = 0, 
+                                          radiant = TRUE) {
   # INPUT: Kippwinkel und Drehwinkel eines Panels
   #         Standardmaessig in Radiant angegebenen
   #         drehwinkel bez. Norden, kippwinkel bez. Boden 
@@ -16,7 +16,7 @@ berechne_normalenvektor_panel <- function(drehwinkel=0,
   # kippwinkel entspricht Kippung des Panels zum Boden:
   #   also 0° -> flach auf Boden, 90° -> senkrecht auf Boden
   
-  if(!radiant){
+  if(!radiant) {
     drehwinkel <- grad_zu_rad(drehwinkel)
     kippwinkel <- grad_zu_rad(kippwinkel)
   }
@@ -31,7 +31,7 @@ berechne_normalenvektor_panel <- function(drehwinkel=0,
   # steht daraufhin mit 90° vom Panel ab.
   normalenvektor_elevation = pi - kippwinkel
 
-  if(length(drehwinkel) > 1){
+  if(length(drehwinkel) > 1) {
     return(vectorised_polar_zu_kartesisch(azimuth = normalenvektor_azimuth,
                                elevation = normalenvektor_elevation,
                                length = 1))
@@ -71,6 +71,6 @@ berechne_relative_einstrahlflaeche <- function(einstrahlvektor_sonne,
     skalare_panel <- (mapply(skalarprodukt, einstrahlvektor_sonne, list(normalenvektor_panel)))
     return(skalare_panel/skalare_referenz)
   } else {
-    return(1/skalare_referenz) # perfekte Nachfuehrung hat stets Skalarprodukt von "1"
+    return(1 / skalare_referenz) # perfekte Nachfuehrung hat stets Skalarprodukt von "1"
   }
 }

@@ -1,4 +1,4 @@
-visualisiere_steigerung <- function(proz_steigerung){
+visualisiere_steigerung <- function(proz_steigerung) {
   steigerung <- proz_steigerung
   
   df <- tibble(
@@ -17,13 +17,11 @@ visualisiere_steigerung <- function(proz_steigerung){
           panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
           aspect.ratio = 0.15)
   
-  
-
-  return(plot)  
+  return(plot)
 }
 
 
-visualisiere_ausrichtung <- function(azimuth, elevation){
+visualisiere_ausrichtung <- function(azimuth, elevation) {
   azimuth_normed <- abs(azimuth)
   elevation_normed <- abs(elevation)
   
@@ -37,7 +35,7 @@ visualisiere_ausrichtung <- function(azimuth, elevation){
     }
   }
   
-  labeller_richtung <- function(azimuth, elevation){
+  labeller_richtung <- function(azimuth, elevation) {
     if(azimuth > 0) {
       if(elevation < 0) return("W")
       else return("E")
@@ -122,15 +120,15 @@ visualisiere_kippung_steigerung <- function(elevation, steigerung) {
   return(multiplot(plot_kippung, plot_steigerung, cols = 2))
 }
 
-mapWorld <- borders("world", colour="grey", fill="gray50") # create a layer of borders
+mapWorld <- borders("world", colour = "grey", fill = "gray50") # create a layer of borders
 
-visualisiere_koordinaten <- function(latitude, longitude){
+visualisiere_koordinaten <- function(latitude, longitude) {
   # INPUT: Zwei Geokoordinaten
   # OUTPUT: GGPLOT-Object das auf der Weltkarte, die Koordinaten darstellt
   
-  mp <- ggplot() +  
+  ggplot() +  
     mapWorld +
-    geom_point(aes(x=longitude, y=latitude) ,color="red", size=3) +
+    geom_point(aes(x = longitude, y = latitude), color = "red", size = 3) +
     #    geom_point(aes(x=longitude, y=latitude) ,color="blue", shape=1, size=7.5) +
     #    geom_point(aes(x=longitude, y=latitude) ,color="blue", shape=1, size=12) +
     labs(

@@ -40,7 +40,7 @@ berechne_optimale_panelwinkel <- function(sonnenwinkel,
 }
 
 
-get_optimised_intervall_length <- function(start_date, end_date){
+get_optimised_intervall_length <- function(start_date, end_date) {
   days_label <- c("below 20", "20-30", "30-60", "60-90",
                   "90-120", "120-150", 
                   "above 150")
