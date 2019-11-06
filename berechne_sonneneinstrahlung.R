@@ -9,7 +9,7 @@
 berechne_direkte_sonnenstrahlung <- function(when = Sys.time(), 
                                              lat = 53.57840, long = 9.94080,
                                              zenith_angle,
-                                             seasonal_accuracy = TRUE){
+                                             seasonal_accuracy = TRUE) {
   # Input: when: Zeitpunkt als POSIXct
   #        lat: Breitengrad des Ortes
   #        long: Laengengrad des Ortes
@@ -77,9 +77,9 @@ calculate_transmittance <- function(season, zenith_angle, seasonal_accuracy){
   
   A <- 2 # unsure about concrete definition of "A", optimised value for actual data Hamburg
   
-  a_0 <- r_0[season] * (0.4237 - 0.00821 * (6.0 - A)^2)
-  a_1 <- r_1[season] * (0.5055 + 0.00595 * (6.5 - A)^2)
-  k   <- r_k[season] * (0.2711 + 0.01858 * (2.5 - A)^2)
+  a_0 <- r_0[season] * (0.4237 - 0.00821 * (6.0 - A) ^ 2)
+  a_1 <- r_1[season] * (0.5055 + 0.00595 * (6.5 - A) ^ 2)
+  k   <- r_k[season] * (0.2711 + 0.01858 * (2.5 - A) ^ 2)
   
   unname(a_0 + a_1 * exp(-k/cos(zenith_angle)))
 }

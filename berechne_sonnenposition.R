@@ -15,7 +15,9 @@
 # Disclaimer: Michalsky’s calculations are limited to the period from 1950 to 2050
 #             with uncertainty of greater than ± 0.01°
 
-berechne_sonnenposition <- function(when = Sys.time(), lat = 53.57840, long = 9.94080){    
+berechne_sonnenposition <- function(when = Sys.time(),
+                                    lat = 53.57840,
+                                    long = 9.94080) {    
   # INPUT: when: Zeitpunkt als POSIXct
   #        lat: Breitengrad des Ortes
   #        long: Laengengrad des Ortes
@@ -72,39 +74,39 @@ get_zenith_angle <- function(x) {
 }
 
 
-# Berechnugsfunktionen: -----------------------
+# Berechnugsfunktionen ---------------------------------------------------------
 
-astronomers_alamanc_time <- function(x){
+astronomers_alamanc_time <- function(x) {
   # Astronomer's almanach time is the number of 
   # days since (noon, 1 January 2000)
   origin <- as.POSIXct("2000-01-01 12:00:00")
   as.numeric(difftime(x, origin, units = "days"))
 }
 
-hour_of_day <- function(x){
+hour_of_day <- function(x) {
   x <- as.POSIXlt(x)
   with(x, hour + min / 60 + sec / 3600)
 }
 
-mean_longitude <- function(time){
+mean_longitude <- function(time) {
   (280.460 + 0.9856474 * time) %% 360
 }
 
-mean_anomaly <- function(time){
+mean_anomaly <- function(time) {
   grad_zu_rad((357.528 + 0.9856003 * time) %% 360)
 }
 
-ecliptic_longitude <- function(mnlong, mnanom){
+ecliptic_longitude <- function(mnlong, mnanom) {
   grad_zu_rad(
     (mnlong + 1.915 * sin(mnanom) + 0.020 * sin(2 * mnanom)) %% 360
   )
 }
 
-ecliptic_obliquity <- function(time){
+ecliptic_obliquity <- function(time) {
   grad_zu_rad(23.439 - 0.0000004 * time)
 }
 
-right_ascension <- function(oblqec, eclong){
+right_ascension <- function(oblqec, eclong) {
   num <- cos(oblqec) * sin(eclong)
   den <- cos(eclong)
   ra <- atan(num / den)
@@ -113,23 +115,23 @@ right_ascension <- function(oblqec, eclong){
   ra
 }
 
-right_declination <- function(oblqec, eclong){
+right_declination <- function(oblqec, eclong) {
   asin(sin(oblqec) * sin(eclong))
 }
 
-greenwhich_mean_sidereal <- function(time, hour){
+greenwhich_mean_sidereal <- function(time, hour) {
   (6.697375 + 0.0657098242 * time + hour) %% 24
 }
 
-local_mean_sidereal <- function(gmst, long){
+local_mean_sidereal <- function(gmst, long) {
   grad_zu_rad(15 * ((gmst + long / 15) %% 24))
 }
 
-hour_angle <- function(lmst, ra){
+hour_angle <- function(lmst, ra) {
   ((lmst - ra + pi) %% (2 * pi)) - pi
 }
 
-calculate_elevation <- function(lat, dec, ha){
+calculate_elevation <- function(lat, dec, ha) {
   asin(sin(dec) * sin(lat) + cos(dec) * cos(lat) * cos(ha))
 }
 
