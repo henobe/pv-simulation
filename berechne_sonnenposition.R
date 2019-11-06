@@ -58,20 +58,17 @@ berechne_sonnenposition <- function(when = Sys.time(), lat = 53.57840, long = 9.
 }
 
 
-# Hilfsfunktionen fuer den Umgang mit Input und Output----------
-
-vectorised_berechne_sonnenposition <- Vectorize(berechne_sonnenposition, SIMPLIFY = FALSE)
-
-get_azimuth <- function(x){
-  sapply(x, `[[`, 1)
+# Hilfsfunktionen fuer den Umgang mit Input und Output -------------------------
+get_azimuth <- function(x) {
+  unname(sapply(x, `[[`, 1))
 }
 
-get_elevation <- function(x){
-  sapply(x, `[[`, 2)
+get_elevation <- function(x) {
+  unname(sapply(x, `[[`, 2))
 }
 
-get_zenitwinkel <- function(x){
-  pi - sapply(x, `[[`, 1)
+get_zenith_angle <- function(x) {
+  unname(pi - sapply(x, `[[`, 2))
 }
 
 
