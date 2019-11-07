@@ -31,15 +31,9 @@ berechne_normalenvektor_panel <- function(drehwinkel = 0,
   # steht daraufhin mit 90° vom Panel ab.
   normalenvektor_elevation = pi - kippwinkel
 
-  if(length(drehwinkel) > 1) {
-    return(vectorised_polar_zu_kartesisch(azimuth = normalenvektor_azimuth,
-                               elevation = normalenvektor_elevation,
-                               length = 1))
-  } else {
-    return(polar_zu_kartesisch(azimuth = normalenvektor_azimuth,
-                               elevation = normalenvektor_elevation,
-                               length = 1))
-  }
+  purrr::map2(normalenvektor_azimuth, normalenvektor_elevation,
+              polar_zu_kartesisch,
+              length = 1)
 }
 
 

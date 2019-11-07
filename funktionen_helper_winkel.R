@@ -28,9 +28,6 @@ polar_zu_kartesisch <- function(azimuth, elevation, length = 1) {
 }
 
 
-vectorised_polar_zu_kartesisch <- Vectorize(polar_zu_kartesisch, SIMPLIFY = FALSE)
-
-
 skalarprodukt <- function(vector_a, vector_b) {
   # Input: Zwei Vektoren/Listen, bestehend aus 3 Elementen
   # Output: Skalarprodukt als Vektor (len=1)
