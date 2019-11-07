@@ -36,8 +36,6 @@ berechne_direkte_sonnenstrahlung <- function(when = Sys.time(),
   pmax(transmittance * et_radiation_on_tangent, 0)
 }
 
-vectorised_berechne_sonnenstrahlung <- Vectorize(berechne_direkte_sonnenstrahlung)
-
 
 # Berechnungsfunktionen -----------------------------
 
