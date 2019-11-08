@@ -67,7 +67,7 @@ visualisiere_koordinaten <- function(latitude, longitude) {
     #    geom_point(aes(x=longitude, y=latitude) ,color="blue", shape=1, size=7.5) +
     #    geom_point(aes(x=longitude, y=latitude) ,color="blue", shape=1, size=12) +
     labs(
-      x = "Längengrad",
+      x = "L\U00E4ngengrad",
       y = "Breitengrad"
     ) +
     scale_x_continuous(breaks = c(-180, -90, 0, 90, 180)) +
