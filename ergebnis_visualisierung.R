@@ -1,24 +1,3 @@
-visualisiere_steigerung <- function(proz_steigerung) {
-  steigerung <- proz_steigerung
-  
-  df <- tibble(
-    lage = as_factor(c("a", "b", "c")),
-    ertrag = c(100, steigerung, 150-steigerung)
-  )
-  
-  ggplot(df, aes(x = 1, y = rev(ertrag), fill = lage)) +
-    scale_fill_manual(values = c("white", "#f4c430", "grey50")) +
-    geom_col() +
-    geom_text(aes(x = 1, y = 10, label = paste("Prozentuale Steigerung\nvon", round(steigerung, digits = 2), "%")), size = 8, hjust = 0) +
-    coord_flip() +
-    theme(axis.line=element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),
-          axis.ticks=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank(),legend.position="none",
-          plot.background=element_blank(), panel.background=element_blank(),panel.border=element_blank(),
-          panel.grid.major=element_blank(), panel.grid.minor=element_blank(),
-          aspect.ratio = 0.15)
-}
-
-
 visualisiere_kippung <- function(elevation){
   elevation_normed <- abs(elevation)
   
