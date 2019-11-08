@@ -19,15 +19,19 @@ ui <- fluidPage( # Define UI
             dateRangeInput("daterange", "Datumsauswahl:",
                            language = "de",
                            start  = Sys.Date(),
-                           end    = Sys.Date()+1,
+                           end    = Sys.Date() + 1,
                            min    = "2001-01-01",
                            weekstart = 1,
                            format = "dd-mm-yyyy",
-                           
                            sep = "bis"),
-            
-            numericInput("lat", "Breitengrad: (-90° bis 90°)", 53.6332, min = -90, max = 90),
-            numericInput("long", "Längengrad: (-180° bis 180°)", 9.9881, min = -180, max = 180),
+            numericInput("lat", "Breitengrad: (-90° bis 90°)",
+                         53.6332,
+                         min = -90,
+                         max = 90),
+            numericInput("long", "Längengrad: (-180° bis 180°)",
+                         9.9881,
+                         min = -180,
+                         max = 180),
             
             h3("Info:"),
             p("Welches ist der optimale Kippwinkel eines Solarpanels? Diese Webseite stellt ein Tool zur Verfügung, um, 
@@ -61,33 +65,34 @@ ui <- fluidPage( # Define UI
 
 server <- function(input, output) { # Define server logic
     
-    intervall_length <- reactive(get_optimised_intervall_length(input$daterange[1], input$daterange[2]))
+    intervall_length <- reactive(
+        get_optimised_intervall_length(input$daterange[1],
+                                       input$daterange[2]))
     
-    optimisation_result <- reactive({berechne_optimale_panelwinkel_gesamt(input$daterange[1],
-                                                                          input$daterange[2],
-                                                                          c(input$lat, input$long),
-                                                                          #30)
-                                                                          intervall_length())
+    optimisation_result <- reactive({
+        berechne_optimale_panelwinkel_gesamt(input$daterange[1],
+                                             input$daterange[2],
+                                             c(input$lat, input$long),
+                                             intervall_length())
     })
     
     optim_angles <- reactive({optimisation_result()$winkel})
     sim_data <- reactive({optimisation_result()$data})
     gain <- reactive({optimisation_result()$relative_gain})
     
-    
-    
     output$distPlot <- renderPlot({
-        plot <- ggplot(sim_data(), aes(x = datetime)) +
-            geom_line(aes(y = eingefangene_strahlung, colour = "optimal ausgerichtet")) +
-            geom_line(aes(y = sonnen_strahlung, colour = "flach")) +
-            labs(
-                x = "Zeitpunkt",
-                y = "Strahlungsstärke [W/m^2]",
-                colour = "Ausrichtung des Panels"
-            ) +
-            theme(text = element_text(size=20),
-                  legend.position = "bottom")
-        print(plot)
+        print({
+            ggplot(sim_data(), aes(x = datetime)) +
+                geom_line(aes(y = eingefangene_strahlung,
+                              colour = "optimal ausgerichtet")) +
+                geom_line(aes(y = sonnen_strahlung, 
+                              colour = "flach")) +
+                labs(x = "Zeitpunkt",
+                     y = "Strahlungsstärke [W/m^2]",
+                     colour = "Ausrichtung des Panels") +
+                theme(text = element_text(size=20),
+                      legend.position = "bottom")
+        })
     })
     
     output$angles <- renderPlot({
@@ -95,11 +100,11 @@ server <- function(input, output) { # Define server logic
     })
 
     output$map <- renderPlot({
-        # generate bins based on input$bins from ui.R
-        plot <- visualisiere_koordinaten(latitude = input$lat,
-                                        longitude = input$long)
-        plot <- plot + theme(text = element_text(size=20))
-        print(plot)
+        print({
+            visualisiere_koordinaten(latitude = input$lat,
+                                     longitude = input$long) +
+                theme(text = element_text(size=20))
+        })
     })
 }
 
