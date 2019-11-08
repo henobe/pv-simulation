@@ -26,13 +26,12 @@ visualisiere_kippung <- function(elevation){
     xlab(NULL) + ylab(NULL) +
     geom_polygon(colour = "black", fill = "grey") +
     geom_text(aes(x = 270, y = 0.5, 
-                  label = paste("Optimaler Kippwinkel:\n", 
-                                round(elevation_normed, digits = 1), "°", 
-                                sep = "")), 
+                  label = paste0("Optimaler Kippwinkel:\n", 
+                                 round(elevation_normed, digits = 1), "\U00B0")), 
               size = 8) +
     scale_x_continuous(limits = c(0, 360), 
                        breaks = c(0, 90),
-                       labels = function(x) paste(x, "°", sep = "")) +
+                       labels = function(x) paste0(x, "\U00B0")) +
     coord_polar(direction = -1, start = 3*pi/2) +
     theme(axis.text.y=element_blank(), axis.ticks=element_blank(), axis.text=element_text(size=20))  
 }
