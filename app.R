@@ -51,7 +51,6 @@ ui <- fluidPage( # Define UI
         ),
         
         mainPanel(
-            # Output: Verbatim text for data summary ----
             h2("Kennzahlen"),
             plotOutput("angles", height = "320px"),
             h2("Visualisierung"),
@@ -108,5 +107,4 @@ server <- function(input, output) { # Define server logic
     })
 }
 
-# Run the application 
-shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = server) # Run the application 
