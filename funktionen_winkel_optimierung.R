@@ -6,10 +6,10 @@ berechne_optimale_panelwinkel <- function(sonnenwinkel,
   #        - Strahlungsenergie: Vektor mit passenden Strahlungswerten
   #        - Startwinkel: Start für den Optimierungsalgorithmus
   # OUTPUT: Optimaler Azimuth und Elevation Winkel
-  #          Vektor, mit diesen beiden Elementen
+  #         Vektor, mit diesen beiden Elementen
   
   result <- optimise(berechne_strahlungsenergie_bei_panelwinkel,
-                     interval = c(-90,90),
+                     interval = c(-90, 90),
                      tol = 0.01,
                      maximum = TRUE,
                      sw = sonnenwinkel,
@@ -52,9 +52,9 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
   #        postion als vector mit zwei Dezimalkoordinaten,
   #        intervall_length: Abstand zwischen zwei Messpunkten, in Minuten 
   # OUTPUT: Listenobjekt mit drei Elementen:
-  #           winkel: Vektor mit den beiden optimalen Einstellwinkeln
-  #           data: ein Dataframe mit den wichtigsten Berechnungsdaten zur weiteren Verwendung
-  #           relative_gain: eine Kennzahl der prozentualen Verbesserung mit gekipptem Panel zu liegendem.
+  #         - winkel: Vektor mit den beiden optimalen Einstellwinkeln
+  #         - data: ein Dataframe mit den wichtigsten Berechnungsdaten zur weiteren Verwendung
+  #         - relative_gain: eine Kennzahl der prozentualen Verbesserung mit gekipptem Panel zu liegendem.
   
   time_zone <- tz_lookup_coords(lat = position[1],
                                 lon = position[2],
