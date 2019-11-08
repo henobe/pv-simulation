@@ -14,8 +14,9 @@ berechne_direkte_sonnenstrahlung <- function(when = Sys.time(),
   #        lat: Breitengrad des Ortes
   #        long: Laengengrad des Ortes
   #        zenith_angle: OPTIONAL um Doppelberechnung zu vermeiden
+  #        seasonal_accuracy: T/F-Wert, ob Sommer/Winter Anpasung
   # Output: Direktstrahlung auf liegende Flaeche
-  #          Einheit: Watt/m^2
+  #         Einheit: Watt/m^2
   
   if(is.character(when)) when <- strptime(when, format)
   when <- with_tz(when, "UTC")
@@ -25,13 +26,17 @@ berechne_direkte_sonnenstrahlung <- function(when = Sys.time(),
     zenith_angle <- unname(pi - pos[2])
   }
   
-  et_radiation <- calcualte_theoretical_radiation(when)
+  et_radiation <- calculate_theoretical_radiation(when)
   
-  et_radiation_on_tangent <- calculate_theoretical_radiation_on_tangent(et_radiation, zenith_angle)
+  et_radiation_on_tangent <- calculate_theoretical_radiation_on_tangent(et_radiation, 
+                                                                        zenith_angle)
 
-  season <- get_season(when)
-  
-  transmittance <- calculate_transmittance(season, zenith_angle, seasonal_accuracy)
+  transmittance <- calculate_transmittance(zenith_angle, 
+                                           switch(seasonal_accuracy + 1,
+                                                  NULL,
+                                                  when,))
+  # switch statement is a work-around for ifelse
+  # ifelse does not accept NULL as return value
   
   pmax(transmittance * et_radiation_on_tangent, 0)
 }
@@ -39,47 +44,54 @@ berechne_direkte_sonnenstrahlung <- function(when = Sys.time(),
 
 # Berechnungsfunktionen -----------------------------
 
-calcualte_theoretical_radiation <- function(when){
+calculate_theoretical_radiation <- function(when){
   #solar_constant = 1367 # W/m^2
-  1367 * (1 + 0.033*cos(2*pi*yday(when)/365))
+  1367 * (1 + 0.033 * cos(2 * pi * yday(when) / 365))
 }
 
-calculate_theoretical_radiation_on_tangent <- function(theoretical_radiation, zenith_angle){
+calculate_theoretical_radiation_on_tangent <- function(theoretical_radiation,
+                                                       zenith_angle){
   # zenith angle in radians!
   unname(theoretical_radiation * cos(zenith_angle))
 }
 
-calculate_transmittance <- function(season, zenith_angle, seasonal_accuracy){
+
+# constants for further functions:
+r_0_map <- c(0.97, 1.03)
+names(r_0_map) <- c("summer", "winter")
+
+r_1_map <- c(0.99, 1.01)
+names(r_1_map) <- c("summer", "winter")
+
+r_k_map <- c(1.02, 1.00)
+names(r_k_map) <- c("summer", "winter")
+
+calculate_transmittance <- function(zenith_angle, when = NULL){
   # Beam Radiation on Ground Surface Clear day
   # Definining Constans
   
-  if(seasonal_accuracy){
-  r_0 <- c(0.97, 1.03)
-  names(r_0) <- c("summer", "winter")
+  r_0 <- c(1)
+  r_1 <- c(1)
+  r_k <- c(1.01)
   
-  r_1 <- c(0.99, 1.01)
-  names(r_1) <- c("summer", "winter")
-  
-  r_k <- c(1.02, 1.00)
-  names(r_k) <- c("summer", "winter")
-  } else {
-    r_0 <- c(1)
-    names(r_0) <- c(season)
+  # overwrite standards if seasonal adjustments are wanted
+  if(!is.null(when)){
+    season <- get_season(when)
     
-    r_1 <- c(1)
-    names(r_1) <- c(season)
-    
-    r_k <- c(1.01)
-    names(r_k) <- c(season)
+    r_0 <- r_0_map[season]
+    r_1 <- r_1_map[season]
+    r_k <- r_k_map[season]
   }
   
-  A <- 2 # unsure about concrete definition of "A", optimised value for actual data Hamburg
+  # unsure about concrete definition of "A"
+  # "2" is an optimal value compared to actual data from Hamburg
+  A <- 2
   
-  a_0 <- r_0[season] * (0.4237 - 0.00821 * (6.0 - A) ^ 2)
-  a_1 <- r_1[season] * (0.5055 + 0.00595 * (6.5 - A) ^ 2)
-  k   <- r_k[season] * (0.2711 + 0.01858 * (2.5 - A) ^ 2)
+  a_0 <- r_0 * (0.4237 - 0.00821 * (6.0 - A) ^ 2)
+  a_1 <- r_1 * (0.5055 + 0.00595 * (6.5 - A) ^ 2)
+  k   <- r_k * (0.2711 + 0.01858 * (2.5 - A) ^ 2)
   
-  unname(a_0 + a_1 * exp(-k/cos(zenith_angle)))
+  unname(a_0 + a_1 * exp(-k / cos(zenith_angle)))
 }
 
 get_season <- function(DATES) {
