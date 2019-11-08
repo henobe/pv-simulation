@@ -28,7 +28,7 @@ ui <- fluidPage( # Define UI
                          53.6332,
                          min = -90,
                          max = 90),
-            numericInput("long", "Längengrad: (-180° bis 180°)",
+            numericInput("lon", "Längengrad: (-180° bis 180°)",
                          9.9881,
                          min = -180,
                          max = 180),
@@ -72,7 +72,7 @@ server <- function(input, output) { # Define server logic
     optimisation_result <- reactive({
         berechne_optimale_panelwinkel_gesamt(input$daterange[1],
                                              input$daterange[2],
-                                             c(input$lat, input$long),
+                                             c(input$lat, input$lon),
                                              intervall_length())
     })
     
@@ -102,7 +102,7 @@ server <- function(input, output) { # Define server logic
     output$map <- renderPlot({
         print({
             visualisiere_koordinaten(latitude = input$lat,
-                                     longitude = input$long) +
+                                     longitude = input$lon) +
                 theme(text = element_text(size=20))
         })
     })
