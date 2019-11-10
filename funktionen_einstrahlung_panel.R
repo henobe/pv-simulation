@@ -1,17 +1,5 @@
 # Funktionen zur Berechnung der Strahlungsenergie auf einem Panel
 
-berechne_gesamte_strahlungsenergie <- function(strahlungsenergie_pro_flaeche, 
-                                               relative_flaeche) {
-  # INPUT: relative Einstrahlflaeche, Einstrahlenergie pro Flaeche,
-  #        beide Werte müssen gleich lang sein
-  # OUTPUT: Summe der gesamten Strahlungsenergie, 
-  
-  strahlungswerte <- strahlungsenergie_pro_flaeche * relative_flaeche
-  
-  sum(strahlungswerte[strahlungswerte > 0]) # neg. Werte nicht beachten
-}
-
-
 berechne_strahlungsenergie_bei_panelwinkel <- function(elevation,
                                                        azimuth = 0,
                                                        sw,
@@ -29,5 +17,5 @@ berechne_strahlungsenergie_bei_panelwinkel <- function(elevation,
   relative_flaeche <- berechne_relative_einstrahlflaeche(sw,
                                                          normalenvektor_panel)
   
-  berechne_gesamte_strahlungsenergie(irr, relative_flaeche)
+  if_else(relative_flaeche < 0, 0, irr * relative_flaeche)
 }

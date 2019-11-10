@@ -54,16 +54,14 @@ berechne_relative_einstrahlflaeche <- function(einstrahlvektor_sonne,
   # Dieser Wert verhält sich wie der Anteil an "aufgefangener" Sonnenstrahlung.
   
   vektor_liegendes_panel <- berechne_normalenvektor_panel()
-  einstrahlung_flach <- purrr::map_dbl(einstrahlvektor_sonne,
-                                       skalarprodukt,
-                                       vektor_liegendes_panel)
+  einstrahlung_flach <- skalarprodukt(einstrahlvektor_sonne,
+                                      vektor_liegendes_panel)
   
   if(is.null(normalenvektor_panel)){
     einstrahlung_panel <- 1 # perfekte Nachfuehrung fängt 100% Strahlung auf
   } else {
-    einstrahlung_panel <- purrr::map_dbl(einstrahlvektor_sonne,
-                                         skalarprodukt,
-                                         normalenvektor_panel)
+    einstrahlung_panel <- skalarprodukt(einstrahlvektor_sonne,
+                                        normalenvektor_panel)
   }
   einstrahlung_panel / einstrahlung_flach
 }
