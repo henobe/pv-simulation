@@ -22,13 +22,12 @@ berechne_strahlungsenergie_bei_panelwinkel <- function(elevation,
   # OUTPUT: Gesamte Strahlungsenergie (Skalar),
   #         die bei dieser Konfiguration aufgefangen worden wäre
   
-  relative_flaeche <- berechne_relative_einstrahlflaeche(
-    einstrahlvektor_sonne = sw,
-    normalenvektor_panel = berechne_normalenvektor_panel(kippwinkel = elevation,
-                                                         drehwinkel = azimuth,
-                                                         radiant = FALSE),
-    nachfuehrung = FALSE
-  )
+  normalenvektor_panel <- berechne_normalenvektor_panel(kippwinkel = elevation,
+                                                        drehwinkel = azimuth,
+                                                        radiant = FALSE)
+  
+  relative_flaeche <- berechne_relative_einstrahlflaeche(sw,
+                                                         normalenvektor_panel)
   
   berechne_gesamte_strahlungsenergie(irr, relative_flaeche)
 }

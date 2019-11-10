@@ -38,33 +38,32 @@ berechne_normalenvektor_panel <- function(drehwinkel = 0,
 
 
 berechne_relative_einstrahlflaeche <- function(einstrahlvektor_sonne,
-                                               normalenvektor_panel,
-                                               nachfuehrung = FALSE){
+                                               normalenvektor_panel = NULL){
   # INPUT: - Einstrahlvektor der Sonne, 
   #           def. vom Nullpunkt ZUR Sonne, Laenge 1
   #           auch als Liste dieser Vektoren
   #        - Normanlenvektor des Panels,
-  #           als einfacher Vektor aus kart. Koord., Laenge 1
-  #        - Nachfuehrung: gibt rel. Einstrahlflaeche fuer 
-  #           perfekte Nachfuehrung an, normalenvektor_panel
-  #           dann irrelevant
+  #           als einfacher Vektor aus kart. Koord., Laenge 1,
+  #           wenn "null" wird von Nachfuehrung ausgegangen.
   # OUTPUT: Die Einstrahlflaeche relativ zu einem liegenden Panel 
   #          als Vektor der gleichen Laenge wie einstrahlvektor_sonne
   
-  vektor_liegendes_panel <- berechne_normalenvektor_panel()
-  
   # Das Skalarprodukt in kartesischen Raum:
-  # da beide Vektoren die Laenge 1 besitzen (wird hier nicht geprüft!),
-  # ergibt das Skalarprodukt den Cosinus des Winkels, 
-  # den die beiden Vektoren aufspannen.
-  # Dieser Wert ist verhält sich identisch wie der Anteil an
-  # "aufgefangener" Sonnenstrahlung.
-  skalare_referenz <- mapply(skalarprodukt, einstrahlvektor_sonne, list(vektor_liegendes_panel))
+  # Da beide Vektoren die Laenge 1 besitzen (wird hier nicht geprüft!),
+  # ergibt das Skalarprodukt den Cosinus des Winkels, den die Vektoren aufspannen.
+  # Dieser Wert verhält sich wie der Anteil an "aufgefangener" Sonnenstrahlung.
   
-  if(!nachfuehrung){
-    skalare_panel <- (mapply(skalarprodukt, einstrahlvektor_sonne, list(normalenvektor_panel)))
-    return(skalare_panel/skalare_referenz)
+  vektor_liegendes_panel <- berechne_normalenvektor_panel()
+  einstrahlung_flach <- purrr::map_dbl(einstrahlvektor_sonne,
+                                       skalarprodukt,
+                                       vektor_liegendes_panel)
+  
+  if(is.null(normalenvektor_panel)){
+    einstrahlung_panel <- 1 # perfekte Nachfuehrung fängt 100% Strahlung auf
   } else {
-    return(1 / skalare_referenz) # perfekte Nachfuehrung hat stets Skalarprodukt von "1"
+    einstrahlung_panel <- purrr::map_dbl(einstrahlvektor_sonne,
+                                         skalarprodukt,
+                                         normalenvektor_panel)
   }
+  einstrahlung_panel / einstrahlung_flach
 }
