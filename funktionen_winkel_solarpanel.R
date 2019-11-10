@@ -30,7 +30,7 @@ berechne_normalenvektor_panel <- function(drehwinkel = 0,
   # Bezugssysteme noch von 180° abzuziehen. Der Normalenvektor
   # steht daraufhin mit 90° vom Panel ab.
   normalenvektor_elevation = pi - kippwinkel
-
+  
   purrr::map2(normalenvektor_azimuth, normalenvektor_elevation,
               polar_zu_kartesisch,
               length = 1)
@@ -40,7 +40,7 @@ berechne_normalenvektor_panel <- function(drehwinkel = 0,
 vektor_liegendes_panel <- berechne_normalenvektor_panel()
 
 berechne_relative_einstrahlflaeche <- function(einstrahlvektor_sonne,
-                                               normalenvektor_panel = NULL){
+                                               normalenvektor_panel = NULL) {
   # INPUT: - Einstrahlvektor der Sonne, 
   #           def. vom Nullpunkt ZUR Sonne, Laenge 1
   #           auch als Liste dieser Vektoren
