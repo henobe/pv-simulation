@@ -8,7 +8,7 @@ berechne_normalenvektor_panel <- function(drehwinkel = 0,
   #         drehwinkel bez. Norden, kippwinkel bez. Boden 
   # OUTPUT: Der Normalenvektor des beschriebenen Panels
   #           als kartesische Koordinaten, Länge = 1
-
+  
   # drehwinkel entspricht azimuth, 0° -> Norden
   #   Dabei betrachtet man den Winkel von der gekippten Kante
   #   zur am Boden liegenden Kante. Ein Panel, gekippt und nach
@@ -37,6 +37,8 @@ berechne_normalenvektor_panel <- function(drehwinkel = 0,
 }
 
 
+vektor_liegendes_panel <- berechne_normalenvektor_panel()
+
 berechne_relative_einstrahlflaeche <- function(einstrahlvektor_sonne,
                                                normalenvektor_panel = NULL){
   # INPUT: - Einstrahlvektor der Sonne, 
@@ -53,7 +55,6 @@ berechne_relative_einstrahlflaeche <- function(einstrahlvektor_sonne,
   # ergibt das Skalarprodukt den Cosinus des Winkels, den die Vektoren aufspannen.
   # Dieser Wert verhält sich wie der Anteil an "aufgefangener" Sonnenstrahlung.
   
-  vektor_liegendes_panel <- berechne_normalenvektor_panel()
   einstrahlung_flach <- skalarprodukt(einstrahlvektor_sonne,
                                       vektor_liegendes_panel)
   
