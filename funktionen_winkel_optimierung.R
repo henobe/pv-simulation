@@ -59,7 +59,8 @@ get_optimised_intervall_length <- function(start_date, end_date) {
 
 berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
                                                  end_date = now() + days(1),
-                                                 position = c(53.6332, 9.9881), 
+                                                 lat = 53.6332,
+                                                 lon = 9.9881,
                                                  intervall_length = 10, 
                                                  simplify_return = FALSE){
   # INPUT: start_date und end_date als POSIXct-Wert,
@@ -70,8 +71,8 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
   #         - data: ein Dataframe mit den wichtigsten Berechnungsdaten zur weiteren Verwendung
   #         - relative_gain: eine Kennzahl der prozentualen Verbesserung mit gekipptem Panel zu liegendem.
   
-  time_zone <- tz_lookup_coords(lat = position[1],
-                                lon = position[2],
+  time_zone <- tz_lookup_coords(lat = lat,
+                                lon = lon,
                                 method = "fast",
                                 warn = FALSE)
   
@@ -80,20 +81,20 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
                                                          end_date,
                                                          intervall_length)),
                           time_zone),
-      coordinates = list(position)) %>%
+               coordinates = list(c(lat, lon))) %>%
     # filter missing data bei Zeitumstellung Winter auf Sommer
     filter(!is.na(datetime)) %>%
     mutate_at("datetime", with_tz, "UTC") %>%
     mutate(sonnen_winkel = purrr::map(datetime, berechne_sonnenposition,
-                                      lat = position[1],
-                                      lon = position[2]),
+                                      lat = lat,
+                                      lon = lon),
            zenith_angle = get_zenith_angle(sonnen_winkel),
            winkel_kartesisch = purrr::map2(get_azimuth(sonnen_winkel),
                                            get_elevation(sonnen_winkel),
                                            polar_zu_kartesisch),
            sonnen_strahlung = berechne_direkte_sonnenstrahlung(when = datetime,
-                                                               lat = position[1],
-                                                               lon = position[2],
+                                                               lat = lat,
+                                                               lon = lon,
                                                                zenith_angle = zenith_angle,
                                                                seasonal_accuracy = FALSE))
   

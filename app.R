@@ -71,7 +71,8 @@ server <- function(input, output) { # Define server logic
     optimisation_result <- reactive({
         berechne_optimale_panelwinkel_gesamt(input$daterange[1],
                                              input$daterange[2],
-                                             c(input$lat, input$lon),
+                                             input$lat,
+                                             input$lon,
                                              intervall_length())
     })
     
