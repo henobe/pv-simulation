@@ -57,8 +57,7 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
                                                  end_date = now() + days(1),
                                                  lat = 53.6332,
                                                  lon = 9.9881,
-                                                 intervall_length = 10, 
-                                                 simplify_return = FALSE) {
+                                                 intervall_length = 10) {
   # INPUT: start_date und end_date als POSIXct-Wert,
   #        postion als vector mit zwei Dezimalkoordinaten,
   #        intervall_length: Abstand zwischen zwei Messpunkten, in Minuten 
@@ -87,27 +86,29 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
            winkel_kartesisch = purrr::map2(get_azimuth(sonnen_winkel),
                                            get_elevation(sonnen_winkel),
                                            polar_zu_kartesisch),
-           sonnen_strahlung = berechne_direkte_sonnenstrahlung(when = dt_utc,
-                                                               lat = lat,
-                                                               lon = lon,
-                                                               zenith_angle = zenith_angle,
-                                                               seasonal_accuracy = FALSE))
+           sonnen_strahlung = berechne_direkte_sonnenstrahlung(
+             when = dt_utc,
+             lat = lat,
+             lon = lon,
+             zenith_angle = zenith_angle,
+             seasonal_accuracy = FALSE)
+           )
   
   optimale_winkel <- berechne_optimale_panelwinkel(df$winkel_kartesisch,
                                                    df$sonnen_strahlung)  
   
-  if(simplify_return) return(optimale_winkel["elevation"])
+  df <- mutate(df,
+               eingefangene_strahlung = map2_dbl(
+                 winkel_kartesisch,
+                 sonnen_strahlung,
+                 berechne_strahlungsenergie_bei_panelwinkel,
+                 elevation = optimale_winkel["elevation"],
+                 azimuth = optimale_winkel["azimuth"])
+               )
   
-  df <- df %>%
-    mutate(eingefangene_strahlung = map2_dbl(winkel_kartesisch,
-                                             sonnen_strahlung,
-                                             berechne_strahlungsenergie_bei_panelwinkel,
-                                             elevation = optimale_winkel["elevation"],
-                                             azimuth = optimale_winkel["azimuth"]))
+  gain <- (sum(df$eingefangene_strahlung) / sum(df$sonnen_strahlung) - 1) * 100
   
-  gain <- ((sum(df$eingefangene_strahlung) / sum(df$sonnen_strahlung)) - 1) * 100
-  
-  return(list(winkel = optimale_winkel, 
-              data = df, 
-              relative_gain = gain))
+  list(winkel = optimale_winkel,
+       data = df,
+       relative_gain = gain)
 }
