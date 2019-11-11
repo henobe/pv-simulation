@@ -21,10 +21,7 @@ polar_zu_kartesisch <- function(azimuth, elevation, length = 1) {
   e <- length * sin(azimuth) * sin(elevation)
   d <- length *                cos(elevation)
   
-  vektor <- c(n, e, d)
-  names(vektor) <- c("north", "east", "down")
-  
-  return(vektor)
+  rlang::set_names(c(n, e, d), c("north", "east", "down"))
 }
 
 
