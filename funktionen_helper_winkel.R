@@ -1,7 +1,7 @@
 # Hilfsfunktionen für die Rechnung mit Winkeln und Vektoren
 
-grad_zu_rad <- function(value) {
-  value * pi / 180
+grad_zu_rad <- function(x) {
+  x * pi / 180
 }
 
 
