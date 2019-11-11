@@ -91,12 +91,11 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
            winkel_kartesisch = purrr::map2(get_azimuth(sonnen_winkel),
                                            get_elevation(sonnen_winkel),
                                            polar_zu_kartesisch),
-           sonnen_strahlung = purrr::pmap_dbl(list(when = datetime,
-                                                   lat = position[1],
-                                                   lon = position[2],
-                                                   zenith_angle = zenith_angle,
-                                                   seasonal_accuracy = FALSE),
-                                              berechne_direkte_sonnenstrahlung))
+           sonnen_strahlung = berechne_direkte_sonnenstrahlung(when = datetime,
+                                                               lat = position[1],
+                                                               lon = position[2],
+                                                               zenith_angle = zenith_angle,
+                                                               seasonal_accuracy = FALSE))
   
   optimale_winkel <- berechne_optimale_panelwinkel(df$winkel_kartesisch,
                                                    df$sonnen_strahlung)  
