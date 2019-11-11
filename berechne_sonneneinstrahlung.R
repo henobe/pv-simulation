@@ -45,13 +45,13 @@ berechne_direkte_sonnenstrahlung <- function(when = Sys.time(),
 
 # Berechnungsfunktionen -----------------------------
 
-calculate_theoretical_radiation <- function(when){
+calculate_theoretical_radiation <- function(when) {
   #solar_constant = 1367 # W/m^2
   1367 * (1 + 0.033 * cos(2 * pi * yday(when) / 365))
 }
 
 calculate_theoretical_radiation_on_tangent <- function(theoretical_radiation,
-                                                       zenith_angle){
+                                                       zenith_angle) {
   # zenith angle in radians!
   unname(theoretical_radiation * cos(zenith_angle))
 }
@@ -67,7 +67,7 @@ names(r_1_map) <- c("summer", "winter")
 r_k_map <- c(1.02, 1.00)
 names(r_k_map) <- c("summer", "winter")
 
-calculate_transmittance <- function(zenith_angle, when = NULL){
+calculate_transmittance <- function(zenith_angle, when = NULL) {
   # Beam Radiation on Ground Surface Clear day
   # Definining Constans
   
@@ -95,14 +95,14 @@ calculate_transmittance <- function(zenith_angle, when = NULL){
   unname(a_0 + a_1 * exp(-k / cos(zenith_angle)))
 }
 
-get_season <- function(DATES) {
+get_season <- function(date) {
   #  WS <- as.Date("2012-12-15", format = "%Y-%m-%d") # Winter Solstice
   SE <- as.Date("2012-3-20",  format = "%Y-%m-%d") # Spring Equinox
   #  SS <- as.Date("2012-6-15",  format = "%Y-%m-%d") # Summer Solstice
   FE <- as.Date("2012-9-22",  format = "%Y-%m-%d") # Fall Equinox
   
   # Convert dates from any year to 2012 dates, 2012 is leap year
-  d <- as.Date(strftime(DATES, format="2012-%m-%d"))
+  d <- as.Date(strftime(date, format="2012-%m-%d"))
   
   ifelse(d >= SE & d < FE, "summer", "winter")
 }
