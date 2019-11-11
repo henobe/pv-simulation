@@ -1,2 +1,4 @@
 - no explicit return() when not needed
 - unify functin prefix "calculate" and "berechne"
+- simplify get_optimised_intervall_length
+- make time tests to check for computational choke-holds
