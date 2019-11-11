@@ -7,8 +7,9 @@
 #             northern hemisphere, mid-latitude locations
 
 berechne_direkte_sonnenstrahlung <- function(when = Sys.time(), 
-                                             lat = 53.57840, long = 9.94080,
                                              zenith_angle,
+                                             lat = 53.57840,
+                                             lon = 9.94080,
                                              seasonal_accuracy = TRUE) {
   # Input: when: Zeitpunkt als POSIXct
   #        lat: Breitengrad des Ortes
@@ -22,7 +23,7 @@ berechne_direkte_sonnenstrahlung <- function(when = Sys.time(),
   when <- with_tz(when, "UTC")
   
   if(missing(zenith_angle)){
-    pos <- berechne_sonnenposition(when, lat, long)
+    pos <- berechne_sonnenposition(when, lat, lon)
     zenith_angle <- unname(pi - pos[2])
   }
   
