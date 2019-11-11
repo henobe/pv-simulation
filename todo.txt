@@ -1,2 +1,3 @@
 - change "long" to "lon" as name in function arguments
 - no explicit return() when not needed
+- unify functin prefix "calculate" and "berechne"
