@@ -79,15 +79,15 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
                coordinates = list(c(lat, lon))) %>%
     # filter missing data bei Zeitumstellung Winter auf Sommer
     filter(!is.na(datetime)) %>%
-    mutate_at("datetime", with_tz, "UTC") %>%
-    mutate(sonnen_winkel = purrr::map(datetime, berechne_sonnenposition,
+    mutate(dt_utc = with_tz(datetime, "UTC"),
+           sonnen_winkel = purrr::map(dt_utc, berechne_sonnenposition,
                                       lat = lat,
                                       lon = lon),
            zenith_angle = get_zenith_angle(sonnen_winkel),
            winkel_kartesisch = purrr::map2(get_azimuth(sonnen_winkel),
                                            get_elevation(sonnen_winkel),
                                            polar_zu_kartesisch),
-           sonnen_strahlung = berechne_direkte_sonnenstrahlung(when = datetime,
+           sonnen_strahlung = berechne_direkte_sonnenstrahlung(when = dt_utc,
                                                                lat = lat,
                                                                lon = lon,
                                                                zenith_angle = zenith_angle,
@@ -103,8 +103,7 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
                                              sonnen_strahlung,
                                              berechne_strahlungsenergie_bei_panelwinkel,
                                              elevation = optimale_winkel["elevation"],
-                                             azimuth = optimale_winkel["azimuth"])) %>%
-    mutate_at("datetime", with_tz, time_zone)
+                                             azimuth = optimale_winkel["azimuth"]))
   
   gain <- ((sum(df$eingefangene_strahlung) / sum(df$sonnen_strahlung)) - 1) * 100
   
