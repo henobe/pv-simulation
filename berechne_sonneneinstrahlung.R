@@ -13,7 +13,7 @@ berechne_direkte_sonnenstrahlung <- function(when = Sys.time(),
                                              seasonal_accuracy = TRUE) {
   # Input: when: Zeitpunkt als POSIXct
   #        lat: Breitengrad des Ortes
-  #        long: Laengengrad des Ortes
+  #        lon: Laengengrad des Ortes
   #        zenith_angle: OPTIONAL um Doppelberechnung zu vermeiden
   #        seasonal_accuracy: T/F-Wert, ob Sommer/Winter Anpasung
   # Output: Direktstrahlung auf liegende Flaeche

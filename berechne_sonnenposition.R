@@ -17,10 +17,10 @@
 
 berechne_sonnenposition <- function(when = Sys.time(),
                                     lat = 53.57840,
-                                    long = 9.94080) {    
+                                    lon = 9.94080) {    
   # INPUT: when: Zeitpunkt als POSIXct
   #        lat: Breitengrad des Ortes
-  #        long: Laengengrad des Ortes
+  #        lon: Laengengrad des Ortes
   # OUTPUT: Position der Sonne im NED-System 
   #          Kugelkoordinaten radiant, Vektor len=2
   
@@ -41,7 +41,7 @@ berechne_sonnenposition <- function(when = Sys.time(),
   
   # Local coordinates
   gmst <- greenwhich_mean_sidereal(time, hour)  
-  lmst <- local_mean_sidereal(gmst, long)
+  lmst <- local_mean_sidereal(gmst, lon)
   
   # Hour angle
   ha <- hour_angle(lmst, ra)
@@ -123,8 +123,8 @@ greenwhich_mean_sidereal <- function(time, hour) {
   (6.697375 + 0.0657098242 * time + hour) %% 24
 }
 
-local_mean_sidereal <- function(gmst, long) {
-  grad_zu_rad(15 * ((gmst + long / 15) %% 24))
+local_mean_sidereal <- function(gmst, lon) {
+  grad_zu_rad(15 * ((gmst + lon / 15) %% 24))
 }
 
 hour_angle <- function(lmst, ra) {

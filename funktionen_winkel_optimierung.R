@@ -86,7 +86,7 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
     mutate_at("datetime", with_tz, "UTC") %>%
     mutate(sonnen_winkel = purrr::map(datetime, berechne_sonnenposition,
                                       lat = position[1],
-                                      long = position[2]),
+                                      lon = position[2]),
            zenith_angle = get_zenith_angle(sonnen_winkel),
            winkel_kartesisch = purrr::map2(get_azimuth(sonnen_winkel),
                                            get_elevation(sonnen_winkel),
