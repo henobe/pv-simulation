@@ -27,7 +27,7 @@ berechne_optimale_panelwinkel <- function(sonnenwinkel,
                      tol = 0.01,
                      maximum = TRUE,
                      sw = sonnenwinkel,
-                     irr = strahlungsenergie_pro_flaeche) # für Maximierung
+                     irr = strahlungsenergie_pro_flaeche)
   
   drehwinkel <- c(0, result[[1]])
   names(drehwinkel) <- c("azimuth", "elevation")
@@ -38,22 +38,20 @@ berechne_optimale_panelwinkel <- function(sonnenwinkel,
 
 get_optimised_intervall_length <- function(start_date, end_date) {
   days_label <- c("below 20", "20-30", "30-60", "60-90",
-                  "90-120", "120-150", 
-                  "above 150")
+                  "90-120", "120-150", "above 150")
   days_number <- c(0, 20, 30, 60, 90, 120, 150, 9999)
   
-   lookuptable <- tibble(
-    number_days = days_label,
-    intervall_length = c(10, 20, 30, 40, 50, 60, 90)  # minutes
-  ) %>% mutate_at("number_days", factor)
-  
+  lookuptable <- tibble(number_days = days_label,
+                        # minutes:
+                        intervall_length = c(10, 20, 30, 40, 50, 60, 90)) %>%
+    mutate_at("number_days", factor)
   
   deltap <- cut(as.numeric(end_date - start_date), 
                 breaks = days_number, labels = days_label)
-
+  
   index <- match(deltap, lookuptable$number_days)
   
-  return(lookuptable$intervall_length[index])
+  lookuptable$intervall_length[index]
 }
 
 
@@ -62,14 +60,14 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
                                                  lat = 53.6332,
                                                  lon = 9.9881,
                                                  intervall_length = 10, 
-                                                 simplify_return = FALSE){
+                                                 simplify_return = FALSE) {
   # INPUT: start_date und end_date als POSIXct-Wert,
   #        postion als vector mit zwei Dezimalkoordinaten,
   #        intervall_length: Abstand zwischen zwei Messpunkten, in Minuten 
   # OUTPUT: Listenobjekt mit drei Elementen:
   #         - winkel: Vektor mit den beiden optimalen Einstellwinkeln
-  #         - data: ein Dataframe mit den wichtigsten Berechnungsdaten zur weiteren Verwendung
-  #         - relative_gain: eine Kennzahl der prozentualen Verbesserung mit gekipptem Panel zu liegendem.
+  #         - data: ein Dataframe mit den wichtigsten Berechnungsdaten
+  #         - relative_gain: prozentualen Differenz gekippt zu liegend
   
   time_zone <- tz_lookup_coords(lat = lat,
                                 lon = lon,
