@@ -73,12 +73,11 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
                                 lon = lon,
                                 method = "fast",
                                 warn = FALSE)
-  
-  df <- tibble(
-      datetime = force_tz(as.POSIXct(generiere_zeitreihe(start_date, 
-                                                         end_date,
-                                                         intervall_length)),
-                          time_zone),
+
+  df <- tibble(datetime = force_tz(generiere_zeitreihe(start_date,
+                                                       end_date,
+                                                       intervall_length),
+                                   time_zone),
                coordinates = list(c(lat, lon))) %>%
     # filter missing data bei Zeitumstellung Winter auf Sommer
     filter(!is.na(datetime)) %>%

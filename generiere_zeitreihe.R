@@ -7,5 +7,6 @@ generiere_zeitreihe <- function(start_date, end_date, intervall_length) {
   
   n_datetimes <- interval(start_date, end_date) / dminutes(intervall_length)
   timesequence <- round(seq(0, intervall_length * n_datetimes, length.out = n_datetimes + 1) * 60)
-  return(start_date + seconds(timesequence))
+  
+  as.POSIXct(start_date + seconds(timesequence))
 }
