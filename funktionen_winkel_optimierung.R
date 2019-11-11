@@ -9,7 +9,7 @@ berechne_optimale_panelwinkel <- function(sonnenwinkel,
   #         Vektor, mit diesen beiden Elementen
   
   gesamte_strahlungsenergie <- function(elevation,
-                                        azimuth = 0,
+                                        azimuth,
                                         sw,
                                         irr) {
     
@@ -26,13 +26,11 @@ berechne_optimale_panelwinkel <- function(sonnenwinkel,
                      interval = c(-90, 90),
                      tol = 0.01,
                      maximum = TRUE,
+                     azimuth = 0,
                      sw = sonnenwinkel,
                      irr = strahlungsenergie_pro_flaeche)
   
-  drehwinkel <- c(0, result[[1]])
-  names(drehwinkel) <- c("azimuth", "elevation")
-  
-  return(drehwinkel)
+  rlang::set_names(c(result[[1]], 0), c("elevation", "azimuth"))
 }
 
 

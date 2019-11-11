@@ -96,7 +96,7 @@ server <- function(input, output) { # Define server logic
     })
     
     output$angles <- renderPlot({
-        print(visualisiere_kippung_steigerung(optim_angles()[2], gain()))
+        print(visualisiere_kippung_steigerung(optim_angles()["elevation"], gain()))
     })
 
     output$map <- renderPlot({
