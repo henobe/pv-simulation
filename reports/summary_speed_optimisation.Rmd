@@ -1,0 +1,80 @@
+---
+title: "Zeitoptimierungen im Code"
+author: "Hendrik Obelöer"
+date: "10 Dezember 2019"
+output: html_document
+subtitle: Bachelorprojekt Gruber, Jürgens, Obelöer
+---
+
+```{r}
+source('../load_libraries.R')
+
+source('../funktionen_helper_winkel.R')
+source('../berechne_sonnenposition.R')
+source('../berechne_sonneneinstrahlung.R')
+source('../funktionen_einstrahlung_panel.R')
+source('../funktionen_winkel_optimierung.R')
+source('../funktionen_winkel_solarpanel.R')
+source('../generiere_zeitreihe.R')
+source('../ergebnis_visualisierung.R')
+```
+
+```{r get data}
+if(file.exists("timediff_data.csv")) {
+  timediff_data <- read_csv("timediff_data.csv", col_types = c("ddddi"))
+} else {
+  dt_start <- now()
+  
+  gen_timediff_table <- function(data) {
+    timediffs <- c()
+    for (i in 2:length(data)){
+      timediffs <- c(timediffs, as.double(data[i] - data[i - 1]))
+    }
+    
+    tibble(tz_lookup = timediffs[1],
+           gen_sun_data = timediffs[2],
+           optim_angle = timediffs[3],
+           calc_solar_on_ground = timediffs[4])
+  }
+  
+  helper_func <- function(dt_start, sim_length_days) {
+    dt_end = dt_start + days(sim_length_days)
+    
+    data <- berechne_optimale_panelwinkel_gesamt(start_date = dt_start,
+                                                 end_date = dt_end)$timestamps
+    
+    add_column(gen_timediff_table(data), days = sim_length_days)
+  }
+  
+  days <- rep(c(5, 10, 15, 20, 30, 40, 50), each = 10)
+  timediff_data <- map_dfr(days, helper_func, dt_start = dt_start)
+  write_csv(timediff_data, path = "timediff_data.csv")
+}
+```
+
+```{r}
+timediff_data %>%
+  group_by(days) %>%
+  summarise_all(mean) %>%
+  pivot_longer(cols = c(-days)) %>%
+  group_by(days) %>%
+  mutate(share = value / sum(value)) %>%
+  ggplot(aes(x = days, y = share, fill = name)) +
+  geom_col()
+```
+
+--> Optimisierung des Winkels ist in allen Fällen zu ca. 3/4 für Zeitaufwand veranwortlich.
+
+```{r}
+
+```
+
+Ideen:
+
+- Zugrundeliegende funktionen beschleunigen. Langsamkeit liegt nicht in Optimierung sondern berechnung der Funktion.
+
+1. Weg: Rechenaufwand verkleinern
+- Optimierungsdaten erst auf x Prozent samplen, dann mit resultieren optim winkellimits +-x% vom optimwinkel wieder in eine Optimerung gehen, nun mit genauen daten
+- Nur den Sonnenhöchstenstand betrachten, also 1 Zeitpunkt pro Tag.
+
+2. Weg Funktionen umstellen / effizineter schreiben
