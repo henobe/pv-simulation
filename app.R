@@ -87,6 +87,8 @@ server <- function(input, output) { # Define server logic
                               colour = "optimal ausgerichtet")) +
                 geom_line(aes(y = sonnen_strahlung, 
                               colour = "flach")) +
+                geom_line(aes(y = eingefangene_strahlung_nachgefuehrt,
+                              colour = "nachgeführt")) +
                 labs(x = "Zeitpunkt",
                      y = "Strahlungsstärke [W/m^2]",
                      colour = "Ausrichtung des Panels") +
