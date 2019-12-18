@@ -103,7 +103,14 @@ berechne_optimale_panelwinkel_gesamt <- function(start_date = now(),
                  sonnen_strahlung,
                  berechne_strahlungsenergie_bei_panelwinkel,
                  elevation = optimale_winkel["elevation"],
-                 azimuth = optimale_winkel["azimuth"])
+                 azimuth = optimale_winkel["azimuth"]),
+               eingefangene_strahlung_nachgefuehrt = map2_dbl(
+                 winkel_kartesisch,
+                 sonnen_strahlung,
+                 berechne_strahlungsenergie_bei_panelwinkel,
+                 elevation = 0,  # setting to 0 so "map"
+                 azimuth = 0,    # uses correct arguments
+                 tracking = TRUE)
                )
   
   gain <- (sum(df$eingefangene_strahlung) / sum(df$sonnen_strahlung) - 1) * 100
