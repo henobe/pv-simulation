@@ -33,6 +33,12 @@ ui <- fluidPage( # Define UI
                          min = -180,
                          max = 180),
             
+            h3("Eigener Winkel"),
+            numericInput("hardangle", "Winkel des Panels: (0° bis 90°)",
+                         0,
+                         min = 0,
+                         max = 90),
+            
             h3("Info:"),
             p("Welches ist der optimale Kippwinkel eines Solarpanels? Diese Webseite stellt ein Tool zur Verfügung, um, 
                abhängig von Zeitraum und Position, diese Frage zu beantworten.
@@ -44,6 +50,9 @@ ui <- fluidPage( # Define UI
                     Je kleiner der ausgewählte Zeitraum ist, desto genauer ist die Simulation."),
             br(),
             p(),
+            p("Die Einstellung des eigenen Winkels kann genutzt werden,
+               um den Ertrag des optimierten Panels mit anderen Konfigurationen
+               zu vergleichen (bspw. der Winkel eines Hausdaches)."),
             p("Bei der Positionseingabe wird die Zeitzone automatisch erkannt, 
                so dass die ausgewählten Tage stets von 0 Uhr bis 0 Uhr simuliert werden."),
             p("Der genutzte Berechnungsalgorithmus ist für die nördliche Halbkugel ausgelegt und kann
@@ -77,8 +86,17 @@ server <- function(input, output) { # Define server logic
     })
     
     optim_angles <- reactive({optimisation_result()$winkel})
-    sim_data <- reactive({optimisation_result()$data})
+    sim_data <- reactive({
+        mutate(optimisation_result()$data,
+               eingefangene_strahlung_hardangle = map2_dbl(
+                   winkel_kartesisch,
+                   sonnen_strahlung,
+                   berechne_strahlungsenergie_bei_panelwinkel,
+                   elevation = input$hardangle,
+                   azimuth = 0))   })
     gain <- reactive({optimisation_result()$relative_gain})
+    
+    
     
     output$distPlot <- renderPlot({
         print({
@@ -89,6 +107,8 @@ server <- function(input, output) { # Define server logic
                               colour = "flach")) +
                 geom_line(aes(y = eingefangene_strahlung_nachgefuehrt,
                               colour = "nachgeführt")) +
+                geom_line(aes(y = eingefangene_strahlung_hardangle,
+                              colour = "eigener Winkel")) +
                 labs(x = "Zeitpunkt",
                      y = "Strahlungsstärke [W/m^2]",
                      colour = "Ausrichtung des Panels") +
