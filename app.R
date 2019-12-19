@@ -92,10 +92,11 @@ server <- function(input, output) { # Define server logic
                    winkel_kartesisch,
                    sonnen_strahlung,
                    berechne_strahlungsenergie_bei_panelwinkel,
-                   elevation = input$hardangle,
+                   elevation = if_else(input$lat < 0,
+                                       -input$hardangle,
+                                       input$hardangle),
                    azimuth = 0))})
-    gain <- reactive({optimisation_result()$relative_gain})
-    
+
     comp_data <- reactive({pivot_irridation_data(sim_data())})
     
     output$distPlot <- renderPlot({
@@ -103,7 +104,8 @@ server <- function(input, output) { # Define server logic
     })
     
     output$angles <- renderPlot({
-        print(visualisiere_kippung_steigerung(optim_angles()["elevation"], gain()))
+        print(visualisiere_kippung_steigerung(optim_angles()["elevation"],
+                                              comp_data()))
     })
 
     output$map <- renderPlot({
