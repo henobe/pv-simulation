@@ -93,28 +93,11 @@ server <- function(input, output) { # Define server logic
                    sonnen_strahlung,
                    berechne_strahlungsenergie_bei_panelwinkel,
                    elevation = input$hardangle,
-                   azimuth = 0))   })
+                   azimuth = 0))})
     gain <- reactive({optimisation_result()$relative_gain})
     
-    
-    
     output$distPlot <- renderPlot({
-        print({
-            ggplot(sim_data(), aes(x = datetime)) +
-                geom_line(aes(y = eingefangene_strahlung,
-                              colour = "optimal ausgerichtet")) +
-                geom_line(aes(y = sonnen_strahlung, 
-                              colour = "flach")) +
-                geom_line(aes(y = eingefangene_strahlung_nachgefuehrt,
-                              colour = "nachgeführt")) +
-                geom_line(aes(y = eingefangene_strahlung_hardangle,
-                              colour = "eigener Winkel")) +
-                labs(x = "Zeitpunkt",
-                     y = "Strahlungsstärke [W/m^2]",
-                     colour = "Ausrichtung des Panels") +
-                theme(text = element_text(size=20),
-                      legend.position = "bottom")
-        })
+        print(visualisiere_ertrag(sim_data()))
     })
     
     output$angles <- renderPlot({
