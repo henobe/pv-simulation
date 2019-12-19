@@ -96,8 +96,10 @@ server <- function(input, output) { # Define server logic
                    azimuth = 0))})
     gain <- reactive({optimisation_result()$relative_gain})
     
+    comp_data <- reactive({pivot_irridation_data(sim_data())})
+    
     output$distPlot <- renderPlot({
-        print(visualisiere_ertrag(sim_data()))
+        print(visualisiere_ertrag(comp_data()))
     })
     
     output$angles <- renderPlot({

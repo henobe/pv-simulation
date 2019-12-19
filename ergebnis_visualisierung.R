@@ -1,3 +1,22 @@
+pivot_irridation_data <- function(sim_data) {
+  sim_data %>%
+    pivot_longer(cols = c("eingefangene_strahlung",
+                          "sonnen_strahlung",
+                          "eingefangene_strahlung_nachgefuehrt",
+                          "eingefangene_strahlung_hardangle")) %>%
+    select(datetime, name, value) %>%
+    mutate_at("name", factor,
+              levels = c("eingefangene_strahlung_nachgefuehrt",
+                         "eingefangene_strahlung",
+                         "eingefangene_strahlung_hardangle",
+                         "sonnen_strahlung"),
+              labels = c("nachgeführt",
+                         "optimal ausgerichtet",
+                         "eigener Winkel",
+                         "flach liegend"))
+}
+
+
 visualisiere_kippung <- function(elevation){
   elevation_normed <- abs(elevation)
   
@@ -52,23 +71,8 @@ visualisiere_kippung_steigerung <- function(elevation, steigerung) {
             cols = 2)
 }
 
-visualisiere_ertrag <- function(sim_data) {
-  plot_data <- sim_data %>%
-    pivot_longer(cols = c("eingefangene_strahlung",
-                          "sonnen_strahlung",
-                          "eingefangene_strahlung_nachgefuehrt",
-                          "eingefangene_strahlung_hardangle")) %>%
-    select(datetime, name, value) %>%
-    mutate_at("name", factor, 
-              levels = c("eingefangene_strahlung_nachgefuehrt",
-                         "eingefangene_strahlung",
-                         "eingefangene_strahlung_hardangle",
-                         "sonnen_strahlung"),
-              labels = c("nachgeführt",
-                         "optimal ausgerichtet",
-                         "eigener Winkel",
-                         "flach liegend"))
-  
+
+visualisiere_ertrag <- function(plot_data) {
   ggplot(plot_data, aes(x = datetime, y = value, colour = name)) +
     geom_line(size = 1) +
     labs(x = "Zeitpunkt",
