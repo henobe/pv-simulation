@@ -45,9 +45,10 @@ ui <- fluidPage( # Define UI
                Die Berechnung vergleicht die Strahlung auf eine fest gewinkelte Fläche mit einer flach am Boden liegenden. 
                Die Simulation geht ausschließlich von optimalen Bedingungen aus (keine Wolken oder Schatten).
                Die prozentuale Verbesserung ist dementsprechend eine Obergrenze."),
-               strong("Die Berechnung ist nur eine Annäherung und basiert auf einer Simulation.
+            strong("Die Berechnung ist nur eine Annäherung und basiert auf einer Simulation. 
                     Es können außerdem Abweichungen von bis zu 0.5° im optimalen Kippwinkel durch Rundungen auftreten.
-                    Je kleiner der ausgewählte Zeitraum ist, desto genauer ist die Simulation."),
+                    Je kleiner der ausgewählte Zeitraum ist, desto genauer ist die Simulation.
+                    Für berechnete Werte gilt keine Gewähr."),
             br(),
             p(),
             p("Die Einstellung des eigenen Winkels kann genutzt werden,
@@ -56,7 +57,10 @@ ui <- fluidPage( # Define UI
             p("Bei der Positionseingabe wird die Zeitzone automatisch erkannt, 
                so dass die ausgewählten Tage stets von 0 Uhr bis 0 Uhr simuliert werden."),
             p("Der genutzte Berechnungsalgorithmus ist für die nördliche Halbkugel ausgelegt und kann
-               unzuverlässige Daten für sehr südliche Regionen liefern.")
+               unzuverlässige Daten für sehr südliche Regionen liefern."),
+            p("Die Strahlungswerte beziehen sich auf die theoretische Einstrahlungsenergie.
+               Dies ist nicht gleichzusetzen mit elektrischer Energie,
+               welche darunter liegt und abhängig vom spezifischen PV-Panel ist.")
         ),
         
         mainPanel(
@@ -92,33 +96,20 @@ server <- function(input, output) { # Define server logic
                    winkel_kartesisch,
                    sonnen_strahlung,
                    berechne_strahlungsenergie_bei_panelwinkel,
-                   elevation = input$hardangle,
-                   azimuth = 0))   })
-    gain <- reactive({optimisation_result()$relative_gain})
-    
-    
+                   elevation = if_else(input$lat < 0,
+                                       -input$hardangle,
+                                       input$hardangle),
+                   azimuth = 0))})
+
+    comp_data <- reactive({pivot_irridation_data(sim_data())})
     
     output$distPlot <- renderPlot({
-        print({
-            ggplot(sim_data(), aes(x = datetime)) +
-                geom_line(aes(y = eingefangene_strahlung,
-                              colour = "optimal ausgerichtet")) +
-                geom_line(aes(y = sonnen_strahlung, 
-                              colour = "flach")) +
-                geom_line(aes(y = eingefangene_strahlung_nachgefuehrt,
-                              colour = "nachgeführt")) +
-                geom_line(aes(y = eingefangene_strahlung_hardangle,
-                              colour = "eigener Winkel")) +
-                labs(x = "Zeitpunkt",
-                     y = "Strahlungsstärke [W/m^2]",
-                     colour = "Ausrichtung des Panels") +
-                theme(text = element_text(size=20),
-                      legend.position = "bottom")
-        })
+        print(visualisiere_ertrag(comp_data()))
     })
     
     output$angles <- renderPlot({
-        print(visualisiere_kippung_steigerung(optim_angles()["elevation"], gain()))
+        print(visualisiere_kippung_steigerung(optim_angles()["elevation"],
+                                              comp_data()))
     })
 
     output$map <- renderPlot({

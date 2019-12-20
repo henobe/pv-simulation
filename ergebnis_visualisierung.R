@@ -1,3 +1,22 @@
+pivot_irridation_data <- function(sim_data) {
+  sim_data %>%
+    pivot_longer(cols = c("eingefangene_strahlung",
+                          "sonnen_strahlung",
+                          "eingefangene_strahlung_nachgefuehrt",
+                          "eingefangene_strahlung_hardangle")) %>%
+    select(datetime, name, value) %>%
+    mutate_at("name", factor,
+              levels = c("eingefangene_strahlung_nachgefuehrt",
+                         "eingefangene_strahlung",
+                         "eingefangene_strahlung_hardangle",
+                         "sonnen_strahlung"),
+              labels = c("nachgeführt",
+                         "optimal\nausgerichtet",
+                         "eigener Winkel",
+                         "flach liegend"))
+}
+
+
 visualisiere_kippung <- function(elevation){
   elevation_normed <- abs(elevation)
   
@@ -21,37 +40,46 @@ visualisiere_kippung <- function(elevation){
 }
 
 
-visualisiere_steigerung_text <- function(steigerung){
-  ggplot() +
-    geom_text(aes(x = 1, 
-                  y = 1,
-                  label = paste("Strahlungsgewinn\nvon",
-                                round(steigerung, digits = 2),
-                                "%")),
-              size = 8) +
-    scale_y_discrete() +
-    scale_x_discrete() +
-    theme(axis.line = element_blank(),
-          axis.text.x = element_blank(),
-          axis.text.y = element_blank(),
-          axis.ticks = element_blank(),
-          axis.title.x = element_blank(),
-          axis.title.y = element_blank(),
-          legend.position = "none",
-          plot.background = element_blank(),
-          panel.background = element_blank(),
-          panel.border = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank())
+visualisiere_gesamtertrag <- function(comp_data) {
+  sum_data <- comp_data %>%
+    group_by(name) %>%
+    summarise(summe = sum(value))
+  
+  baseline <- sum_data$summe[sum_data$name == "flach liegend"]
+  
+  sum_data <- sum_data %>%
+    mutate(summe = (summe / baseline - 1) * 100) %>%
+    filter(name != "flach liegend")
+  
+  ggplot(sum_data, aes(x = name, y = summe, fill = name)) +
+    geom_col() +
+    coord_flip() +
+    scale_y_continuous(labels = function(x) paste(x, "%")) +
+    labs(x = NULL,
+         y = NULL,
+         title = "Unterschied zu flach liegend") +
+    guides(fill = FALSE) +
+    theme(plot.title = element_text(size = 15),
+          axis.text.y = element_text(size = 15, angle = 45),
+          axis.text.x = element_text(size = 12))
 }
 
 
-visualisiere_kippung_steigerung <- function(elevation, steigerung) {
-  multiplot(visualisiere_kippung(elevation), 
-            visualisiere_steigerung_text(steigerung),
+visualisiere_kippung_steigerung <- function(elevation, comp_data) {
+  multiplot(visualisiere_kippung(elevation),
+            visualisiere_gesamtertrag(comp_data),
             cols = 2)
 }
 
+
+visualisiere_ertrag <- function(plot_data) {
+  ggplot(plot_data, aes(x = datetime, y = value, colour = name)) +
+    geom_line(size = 1) +
+    labs(x = "Zeitpunkt",
+         y = "Strahlungsstärke [W/m^2]",
+         colour = "Ausrichtung") +
+    theme(text = element_text(size=20))
+}
 
 mapWorld <- borders("world", colour = "grey", fill = "gray50")
 
