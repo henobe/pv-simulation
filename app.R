@@ -45,9 +45,10 @@ ui <- fluidPage( # Define UI
                Die Berechnung vergleicht die Strahlung auf eine fest gewinkelte Fläche mit einer flach am Boden liegenden. 
                Die Simulation geht ausschließlich von optimalen Bedingungen aus (keine Wolken oder Schatten).
                Die prozentuale Verbesserung ist dementsprechend eine Obergrenze."),
-               strong("Die Berechnung ist nur eine Annäherung und basiert auf einer Simulation.
+            strong("Die Berechnung ist nur eine Annäherung und basiert auf einer Simulation. 
                     Es können außerdem Abweichungen von bis zu 0.5° im optimalen Kippwinkel durch Rundungen auftreten.
-                    Je kleiner der ausgewählte Zeitraum ist, desto genauer ist die Simulation."),
+                    Je kleiner der ausgewählte Zeitraum ist, desto genauer ist die Simulation.
+                    Für berechnete Werte gilt keine Gewähr."),
             br(),
             p(),
             p("Die Einstellung des eigenen Winkels kann genutzt werden,
@@ -56,7 +57,10 @@ ui <- fluidPage( # Define UI
             p("Bei der Positionseingabe wird die Zeitzone automatisch erkannt, 
                so dass die ausgewählten Tage stets von 0 Uhr bis 0 Uhr simuliert werden."),
             p("Der genutzte Berechnungsalgorithmus ist für die nördliche Halbkugel ausgelegt und kann
-               unzuverlässige Daten für sehr südliche Regionen liefern.")
+               unzuverlässige Daten für sehr südliche Regionen liefern."),
+            p("Die Strahlungswerte beziehen sich auf die theoretische Einstrahlungsenergie.
+               Dies ist nicht gleichzusetzen mit elektrischer Energie,
+               welche darunter liegt und abhängig vom spezifischen PV-Panel ist.")
         ),
         
         mainPanel(
